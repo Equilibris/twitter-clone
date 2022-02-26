@@ -1,0 +1,5 @@
+.git
+set_env.sh
+frontend/**/*
+target/**/*
+Cargo.lock
