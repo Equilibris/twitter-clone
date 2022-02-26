@@ -10,7 +10,7 @@ use crate::{
 
 #[derive(Debug, Deserialize)]
 struct SignUpData<'a> {
-    pub username: &'a str,
+    pub name: &'a str,
     pub password: &'a str,
 }
 
@@ -18,13 +18,15 @@ struct SignUpData<'a> {
 enum SignUpError {
     UserCreationError(&'static str),
     UserDbWriteError(&'static str),
+    UserAlreadyExistsError(&'static str),
 }
 
-// fetch("/user/sign_up",{method:"POST",body:JSON.stringify({username:'hello',password:'world'})}).then(x=>x.json()).then(console.log)
+// fetch("/user/sign_up",{method:"POST",body:JSON.stringify({name:'hello',password:'world'})}).then(x=>x.json()).then(console.log)
 #[post("/sign_up", data = "<data>")]
 fn sign_up(data: Json<SignUpData<'_>>) -> ApiResult<Me, SignUpError> {
     let url = "/user/sign_up".to_string();
-    let user = match User::new(data.username.to_string(), data.password.to_string()) {
+
+    let user = match User::new(data.name.to_string(), data.password.to_string()) {
         Ok(x) => x,
         Err(_) => {
             return ApiResult::error(

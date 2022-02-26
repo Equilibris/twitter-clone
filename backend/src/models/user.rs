@@ -8,26 +8,26 @@ use crate::make_model;
 pub struct User {
     pub uuid: Uuid,
 
-    pub username: String,
+    pub name: String,
     pub password_hash: Password,
 }
 #[derive(Debug, Serialize)]
 pub struct Me {
     pub uuid: Uuid,
 
-    pub username: String,
+    pub name: String,
 }
 #[derive(Debug, Serialize)]
 pub struct PublicUser {
     pub uuid: Uuid,
 
-    pub username: String,
+    pub name: String,
 }
 
 impl Me {
     pub fn new(user: User) -> Self {
         Self {
-            username: user.username,
+            name: user.name,
             uuid: user.uuid,
         }
     }
@@ -35,7 +35,7 @@ impl Me {
 impl PublicUser {
     pub fn new(user: User) -> Self {
         Self {
-            username: user.username,
+            name: user.name,
             uuid: user.uuid,
         }
     }
@@ -43,12 +43,12 @@ impl PublicUser {
 
 impl User {
     pub fn new(
-        username: String,
+        name: String,
         password: String,
     ) -> Result<Self, std::array::TryFromSliceError> {
         Ok(Self {
             uuid: uuid::Uuid::new_v4(),
-            username,
+            name,
             password_hash: Password::new(password.as_str())?,
         })
     }

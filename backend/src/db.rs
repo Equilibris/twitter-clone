@@ -46,3 +46,18 @@ pub fn read<Doc: redis::FromRedisValue>(id: &Uuid) -> anyhow::Result<Doc> {
 
     Ok(result)
 }
+
+pub fn exists<Doc: redis::FromRedisValue>(id: &Uuid) -> anyhow::Result<bool> {
+    let client = crate::env::client::get()?;
+    let mut con = client.get_connection()?;
+
+    let id = convert_uuid::<Doc>(id);
+    let result: redis::Value = redis::cmd("EXISTS").arg(id).query(&mut con)?;
+
+    Ok(match result {
+        redis::Value::Nil => false,
+        redis::Value::Int(0) => false,
+        redis::Value::Int(_) => true,
+        _ => anyhow::bail!("Unexpected return type"),
+    })
+}
