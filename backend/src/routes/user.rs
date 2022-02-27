@@ -14,7 +14,7 @@ struct SignUpData<'a> {
     pub password: &'a str,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Serialize)]
 enum SignUpError {
     UserCreationError(&'static str),
     UserDbWriteError(&'static str),

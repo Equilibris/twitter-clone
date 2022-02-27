@@ -5,11 +5,12 @@ pub fn failover_version_handler<T>(_stream: &[u8]) -> redis::RedisResult<T> {
 
     redis::RedisResult::Err(redis::RedisError::from((
         redis::ErrorKind::TypeError,
-        "Versioning error",
+        VERSIONING_ERROR,
         error,
     )))
 }
 
+pub const VERSIONING_ERROR: &str = "Versioning error.";
 pub const VALUE_DOES_NOT_EXSIST_ERROR: &str = "Value does not exsist.";
 
 #[macro_export]
