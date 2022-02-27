@@ -23,7 +23,7 @@ enum SignUpError {
 
 // fetch("/user/sign_up",{method:"POST",body:JSON.stringify({name:'hello',password:'world'})}).then(x=>x.json()).then(console.log)
 #[post("/sign_up", data = "<data>")]
-fn sign_up(data: Json<SignUpData<'_>>) -> ApiResult<Me, SignUpError> {
+async fn sign_up(data: Json<SignUpData<'_>>) -> ApiResult<Me, SignUpError> {
     let url = "/user/sign_up".to_string();
 
     let user = match User::new(data.name.to_string(), data.password.to_string()) {
@@ -36,7 +36,7 @@ fn sign_up(data: Json<SignUpData<'_>>) -> ApiResult<Me, SignUpError> {
             )
         }
     };
-    match db::write(&user) {
+    match db::write(&user).await {
         Ok(_) => (),
         Err(_) => {
             return ApiResult::error(
@@ -53,20 +53,24 @@ fn sign_up(data: Json<SignUpData<'_>>) -> ApiResult<Me, SignUpError> {
 #[derive(Debug, Serialize)]
 enum GetUserError {
     UserDoesNotExist(Uuid),
+    UnknownError(String),
 }
 
 // fetch("/user/3cc2d059-9098-4f1a-bab1-561f084561a3").then(x=>x.json()).then(console.log)
 #[get("/<id>")]
-fn get_user<'a>(id: Uuid) -> ApiResult<PublicUser, GetUserError> {
+async fn get_user<'a>(id: Uuid) -> ApiResult<PublicUser, GetUserError> {
     let url = format!("/user/{}", id);
 
     let id = id.into();
 
-    let user = match db::read::<User>(&id) {
-        Ok(usr) => usr,
+    let user = match db::read::<User>(&id).await {
+        Ok(Some(usr)) => usr,
+        Ok(None) => return ApiResult::error(url, 404, GetUserError::UserDoesNotExist(id)),
         Err(e) => {
-            println!("e: {}", e);
-            return ApiResult::error(url, 404, GetUserError::UserDoesNotExist(id));
+            println!("Error occured from db::read: {}", e);
+
+            let error = format!("Unknown error occured: {}", e);
+            return ApiResult::error(url, 500, GetUserError::UnknownError(error));
         }
     };
 

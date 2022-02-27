@@ -8,13 +8,14 @@ edition = "2021"
 [dependencies]
 rocket = { version = "0.5.0-rc.1", features = ["json","uuid"] }
 serde = "*"
-redis = "0.21"
+redis = { version = "0.21", features = ["aio", "tokio-comp"]}
 anyhow = "*"
 serde_json = "1.0"
 uuid = { version = "0.8", features = ["serde", "v4"] }
 sha2 = "0.10"
 rand = "0.8"
 base64 = "0.13"
+tokio = { version = "1.17.0", features = ["full"] }
 
 # rocket_okapi = { version = "0.8.0-alpha-1", features = ["swagger", "rapidoc"] }
 # schemars = "^0.7"
