@@ -19,14 +19,44 @@ enum SignUpError {
     UserCreationError(&'static str),
     UserDbWriteError(&'static str),
     UserAlreadyExistsError(&'static str),
+    BadUsername(String),
 }
 
 // fetch("/user/sign_up",{method:"POST",body:JSON.stringify({name:'hello',password:'world'})}).then(x=>x.json()).then(console.log)
 #[post("/sign_up", data = "<data>")]
 async fn sign_up(data: Json<SignUpData<'_>>) -> ApiResult<Me, SignUpError> {
     let url = "/user/sign_up".to_string();
+    let username = data.name.to_string();
 
-    let user = match User::new(data.name.to_string(), data.password.to_string()) {
+    for char in username.chars() {
+        if char.is_whitespace() {
+            return ApiResult::error(
+                url,
+                400,
+                SignUpError::BadUsername("Username cannot include whitespace.".to_string()),
+            );
+        }
+        if let '{' | '}' | '@' | '|' | ':' | '"' | '\'' = char {
+            return ApiResult::error(
+                url,
+                400,
+                SignUpError::BadUsername(format!("Username cannot include character '{}'", char)),
+            );
+        }
+    }
+
+    match User::query_username(&username).await {
+        Ok(None) => (),
+        _ => {
+            return ApiResult::error(
+                url,
+                400,
+                SignUpError::UserAlreadyExistsError("User already exists"),
+            )
+        }
+    };
+
+    let user = match User::new(username, data.password.to_string()) {
         Ok(x) => x,
         Err(_) => {
             return ApiResult::error(

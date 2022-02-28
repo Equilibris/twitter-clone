@@ -11,12 +11,12 @@ pub fn failover_version_handler<T>(_stream: &[u8]) -> redis::RedisResult<T> {
 }
 
 pub const VERSIONING_ERROR: &str = "Versioning error.";
-pub const VALUE_DOES_NOT_EXSIST_ERROR: &str = "Value does not exsist.";
+pub const VALUE_DOES_NOT_EXIST_ERROR: &str = "Value does not exsist.";
 
 #[macro_export]
 macro_rules! make_model {
     ($type:ident) => {
-        use crate::models::make_model::failover_version_handler;
+        use crate::db::make_model::failover_version_handler;
 
         make_model!($type, failover_version_handler);
     };
@@ -33,13 +33,13 @@ macro_rules! make_model {
                     redis::Value::Data(data) => {
                         let result: Self = match serde_json::from_slice(data) {
                             Ok(v) => v,
-                            Err(e) => return $version_handeler(data),
+                            Err(_) => return $version_handeler(data),
                         };
                         Ok(result)
                     }
                     redis::Value::Nil => Err(redis::RedisError::from((
                         redis::ErrorKind::TypeError,
-                        crate::models::make_model::VALUE_DOES_NOT_EXSIST_ERROR,
+                        crate::db::make_model::VALUE_DOES_NOT_EXIST_ERROR,
                     ))),
                     _ => unimplemented!("{:?}", v),
                 }

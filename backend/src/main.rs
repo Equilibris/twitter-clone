@@ -3,21 +3,26 @@
 mod api;
 mod db;
 mod env;
+mod middleware;
 mod models;
 mod routes;
 
 #[macro_use]
 extern crate rocket;
 
-#[launch]
-fn rocket() -> _ {
+#[rocket::main]
+async fn main() -> anyhow::Result<()> {
     unsafe {
-        crate::env::client::generate().unwrap();
+        crate::env::client::generate()?;
         crate::env::pepper::generate();
     }
+
+    crate::models::user::User::ensure_index().await?;
 
     let r = rocket::build();
     let r = crate::routes::mount(r);
 
-    r
+    r.launch().await?;
+
+    Ok(())
 }
