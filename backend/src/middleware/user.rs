@@ -1,4 +1,4 @@
-use rocket::http::Status;
+use rocket::http::{Cookie, CookieJar, Status};
 use rocket::request::{Outcome, Request};
 use uuid::Uuid;
 
@@ -13,6 +13,18 @@ pub enum AuthError {
 }
 
 const USER_AUTH_COOKIE: &str = "user_auth_cookie";
+
+pub fn write_user(token: Token, jar: &CookieJar<'_>) {
+    let mut buf = [b'\0'; 36];
+
+    let id = token.uuid.to_simple().encode_lower(&mut buf);
+
+    let mut cookie = Cookie::new(USER_AUTH_COOKIE, id.to_string());
+    cookie.set_http_only(true);
+    // Expire after 3 days
+
+    jar.add(cookie);
+}
 
 #[rocket::async_trait]
 impl<'r> rocket::request::FromRequest<'r> for User {
@@ -34,13 +46,12 @@ impl<'r> rocket::request::FromRequest<'r> for User {
             _ => return Outcome::Failure((Status::Unauthorized, AuthError::Invalid)),
         };
 
-        // if token.should_renew() {
-        //     let mut buf = [b'\0'; 36];
-
-        //     let id = token.uuid.to_hyphenated().encode_lower(&mut buf);
-
-        //     let cookie = Cookie::new(USER_AUTH_COOKIE, id.to_string()).http_only();
-        // }
+        if token.should_renew() {
+            match Token::create_and_commit(&token).await {
+                Ok(token) => write_user(token, cookies),
+                _ => (),
+            };
+        }
 
         let user = db::read::<User>(&token.associate).await;
 

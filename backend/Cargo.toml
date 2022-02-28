@@ -6,7 +6,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-rocket = { version = "0.5.0-rc.1", features = ["json","uuid"] }
+rocket = { version = "0.5.0-rc.1", features = ["json","uuid","secrets"] }
 serde = "*"
 redis = { version = "0.21", features = ["aio", "tokio-comp"]}
 anyhow = "*"
