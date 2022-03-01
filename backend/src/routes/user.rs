@@ -9,7 +9,7 @@ use crate::{
 };
 
 #[derive(Debug, Deserialize)]
-struct SignUpData<'a> {
+struct SignInAndUpData<'a> {
     pub name: &'a str,
     pub password: &'a str,
 }
@@ -23,32 +23,48 @@ enum SignUpError {
     BadUsername(String),
 }
 
-// fetch("/user/sign_up",{method:"POST",body:JSON.stringify({name:'hello',password:'world'})}).then(x=>x.json()).then(console.log)
-#[post("/sign_up", data = "<data>")]
-async fn sign_up(data: Json<SignUpData<'_>>, jar: &CookieJar<'_>) -> ApiResult<Me, SignUpError> {
-    let url = "/user/sign_up".to_string();
-    let username = data.name.to_string();
-
-    // Shitty input sanitization
-    for char in username.chars() {
+fn username_is_valid(s: &str) -> Result<(), (bool, char)> {
+    for char in s.chars() {
         if char.is_whitespace() {
-            return ApiResult::error(
-                url,
-                400,
-                SignUpError::BadUsername("Username cannot include whitespace.".to_string()),
-            );
+            return Err((true, char));
         }
         if let '{' | '}' | '@' | '|' | ':' | '"' | '\'' = char {
+            return Err((false, char));
+        }
+    }
+    Ok(())
+}
+
+// fetch("/user/sign_up",{method:"POST",body:JSON.stringify({name:'hello',password:'world'})}).then(x=>x.json()).then(console.log)
+#[post("/sign_up", data = "<data>")]
+async fn sign_up(
+    data: Json<SignInAndUpData<'_>>,
+    jar: &CookieJar<'_>,
+) -> ApiResult<Me, SignUpError> {
+    let url = "/user/sign_up".to_string();
+    let username = data.name;
+
+    // Shitty input sanitization
+    match username_is_valid(username) {
+        Err((true, _)) => {
             return ApiResult::error(
                 url,
                 400,
-                SignUpError::BadUsername(format!("Username cannot include character '{}'", char)),
-            );
+                SignUpError::BadUsername("Username cannot include whitespace".to_string()),
+            )
         }
+        Err((false, c)) => {
+            return ApiResult::error(
+                url,
+                400,
+                SignUpError::BadUsername(format!("Username cannot include char: {}", c)),
+            )
+        }
+        _ => (),
     }
 
     // OMG THIS PAIN
-    match User::query_username(&username).await {
+    match User::query_username(username).await {
         Ok(None) => (),
         _ => {
             return ApiResult::error(
@@ -60,7 +76,7 @@ async fn sign_up(data: Json<SignUpData<'_>>, jar: &CookieJar<'_>) -> ApiResult<M
     };
 
     // User creation
-    let user = match User::new(username, data.password.to_string()) {
+    let user = match User::new(username.to_string(), data.password.to_string()) {
         Ok(x) => x,
         Err(_) => {
             return ApiResult::error(
@@ -95,6 +111,49 @@ async fn sign_up(data: Json<SignUpData<'_>>, jar: &CookieJar<'_>) -> ApiResult<M
     crate::middleware::user::write_user(token, jar);
 
     ApiResult::data(url, Me::new(user))
+}
+
+const USER_DOES_NOT_EXIST: &str = "user does not exist";
+
+#[post("/sign_in", data = "<data>")]
+async fn sign_in(
+    data: Json<SignInAndUpData<'_>>,
+    jar: &CookieJar<'_>,
+) -> ApiResult<Me, &'static str> {
+    let url = "/user/sign_in".to_string();
+
+    let username = data.name;
+
+    match username_is_valid(username) {
+        Err(_) => return ApiResult::error(url, 404, USER_DOES_NOT_EXIST),
+        Ok(_) => (),
+    };
+
+    let user = match User::query_username(username).await {
+        Ok(Some(u)) => u,
+
+        _ => return ApiResult::error(url, 404, USER_DOES_NOT_EXIST),
+    };
+
+    if user.password != data.password {
+        return ApiResult::error(url, 404, USER_DOES_NOT_EXIST);
+    }
+
+    let token = crate::models::token::Token::create_and_commit(&user)
+        .await
+        .ok();
+    if let Some(t) = token {
+        crate::middleware::user::write_user(t, jar);
+    }
+
+    ApiResult::data(url, Me::new(user))
+}
+
+#[post("/sign_out")]
+async fn sign_out(jar: &CookieJar<'_>) -> ApiResult<(), ()> {
+    crate::middleware::user::remove_user(jar);
+
+    ApiResult::data("/user/sign_out".to_string(), ())
 }
 
 #[derive(Debug, Serialize)]
@@ -137,5 +196,8 @@ async fn me_fail() -> ApiResult<(), MeError> {
 }
 
 pub fn mount(rocket: Rocket<Build>) -> Rocket<Build> {
-    rocket.mount("/user", routes![sign_up, get_user, me, me_fail])
+    rocket.mount(
+        "/user",
+        routes![sign_up, get_user, me, me_fail, sign_in, sign_out],
+    )
 }

@@ -12,7 +12,7 @@ pub struct User {
     pub uuid: Uuid,
 
     pub name: String,
-    pub password_hash: Password,
+    pub password: Password,
 }
 #[derive(Debug, Serialize)]
 pub struct Me {
@@ -51,13 +51,13 @@ impl User {
         Ok(Self {
             uuid: uuid::Uuid::new_v4(),
             name,
-            password_hash: Password::new(password.as_str())?,
+            password: Password::new(password.as_str())?,
         })
     }
 
     // FIXME: This is more unstable than my mental state
     pub async fn query_username_con(
-        name: &String,
+        name: &str,
         con: &mut redis::aio::Connection,
     ) -> anyhow::Result<Option<Self>> {
         let name = name.replace(".", "\\.");
@@ -74,7 +74,7 @@ impl User {
             v.into_iter().next()
         }))
     }
-    pub async fn query_username(name: &String) -> anyhow::Result<Option<Self>> {
+    pub async fn query_username(name: &str) -> anyhow::Result<Option<Self>> {
         let mut con = db::get_con().await?;
 
         Self::query_username_con(name, &mut con).await

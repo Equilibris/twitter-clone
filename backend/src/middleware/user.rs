@@ -14,6 +14,10 @@ pub enum AuthError {
 
 const USER_AUTH_COOKIE: &str = "user_auth_cookie";
 
+pub fn remove_user(jar: &CookieJar<'_>) {
+    jar.remove(Cookie::new(USER_AUTH_COOKIE, ""));
+}
+
 pub fn write_user(token: Token, jar: &CookieJar<'_>) {
     let mut buf = [b'\0'; 36];
 
