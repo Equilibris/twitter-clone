@@ -31,7 +31,7 @@ impl<T: redis::FromRedisValue> redis::FromRedisValue for FtQuery<T> {
         while let Some(v) = bulk.next() {
             let key = <String as FromRedisValue>::from_redis_value(&v)?;
             let value = match bulk.next() {
-                Some(redis::Value::Bulk(v)) => T::from_redis_value(&v[1])?,
+                Some(redis::Value::Bulk(v)) => T::from_redis_value(v.last().unwrap())?,
                 _ => {
                     return Err(redis::RedisError::from((
                         redis::ErrorKind::TypeError,
@@ -45,14 +45,11 @@ impl<T: redis::FromRedisValue> redis::FromRedisValue for FtQuery<T> {
         Ok(Self { container: result })
     }
 }
-
-impl<T: FromRedisValue> Into<Vec<T>> for FtQuery<T> {
-    fn into(self) -> Vec<T> {
+impl<T: FromRedisValue> FtQuery<T> {
+    pub fn values(self) -> Vec<T> {
         self.container.into_iter().map(|(_, v)| v).collect()
     }
-}
-impl<T: FromRedisValue> Into<Vec<(String, T)>> for FtQuery<T> {
-    fn into(self) -> Vec<(std::string::String, T)> {
+    pub fn key_values(self) -> Vec<(String, T)> {
         self.container
     }
 }

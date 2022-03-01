@@ -5,7 +5,11 @@ use uuid::Uuid;
 use crate::{
     api::result::ApiResult,
     db,
-    models::user::{Me, PublicUser, User},
+    middleware::user,
+    models::{
+        token::Token,
+        user::{Me, PublicUser, User},
+    },
 };
 
 #[derive(Debug, Deserialize)]
@@ -97,7 +101,7 @@ async fn sign_up(
         }
     }
 
-    let token = match crate::models::token::Token::create_and_commit(&user).await {
+    let token = match Token::create_and_commit(&user).await {
         Ok(token) => token,
         Err(_) => {
             return ApiResult::error(
@@ -108,7 +112,7 @@ async fn sign_up(
         }
     };
 
-    crate::middleware::user::write_user(token, jar);
+    user::write_user(token, jar);
 
     ApiResult::data(url, Me::new(user))
 }
@@ -124,9 +128,8 @@ async fn sign_in(
 
     let username = data.name;
 
-    match username_is_valid(username) {
-        Err(_) => return ApiResult::error(url, 404, USER_DOES_NOT_EXIST),
-        Ok(_) => (),
+    if let Err(_) = username_is_valid(username) {
+        return ApiResult::error(url, 404, USER_DOES_NOT_EXIST);
     };
 
     let user = match User::query_username(username).await {
@@ -139,32 +142,34 @@ async fn sign_in(
         return ApiResult::error(url, 404, USER_DOES_NOT_EXIST);
     }
 
-    let token = crate::models::token::Token::create_and_commit(&user)
-        .await
-        .ok();
+    let token = Token::create_and_commit(&user).await.ok();
     if let Some(t) = token {
-        crate::middleware::user::write_user(t, jar);
+        user::write_user(t, jar);
     }
 
     ApiResult::data(url, Me::new(user))
 }
 
-#[post("/sign_out")]
+#[post("/sign_out")] // FIXME: This leaks memory
 async fn sign_out(jar: &CookieJar<'_>) -> ApiResult<(), ()> {
-    crate::middleware::user::remove_user(jar);
+    #[allow(unused_must_use)]
+    {
+        user::remove_user(jar).await;
+    }
 
     ApiResult::data("/user/sign_out".to_string(), ())
 }
 
 #[derive(Debug, Serialize)]
-enum GetUserError {
+pub enum GetUserError {
     UserDoesNotExist(Uuid),
     UnknownError(String),
 }
 
+pub type GetUserResult = ApiResult<PublicUser, GetUserError>;
 // fetch("/user/3cc2d059-9098-4f1a-bab1-561f084561a3").then(x=>x.json()).then(console.log)
 #[get("/<id>")]
-async fn get_user<'a>(id: Uuid) -> ApiResult<PublicUser, GetUserError> {
+pub async fn get_user(id: Uuid) -> GetUserResult {
     let url = format!("/user/{}", id);
 
     let id = id.into();

@@ -1,7 +1,8 @@
 use rocket::{Build, Rocket};
 
-mod user;
+pub mod posts;
+pub mod user;
 
 pub fn mount(rocket: Rocket<Build>) -> Rocket<Build> {
-    self::user::mount(rocket)
+    self::posts::mount(self::user::mount(rocket))
 }

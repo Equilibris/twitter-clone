@@ -14,8 +14,16 @@ pub enum AuthError {
 
 const USER_AUTH_COOKIE: &str = "user_auth_cookie";
 
-pub fn remove_user(jar: &CookieJar<'_>) {
+pub async fn remove_user(jar: &CookieJar<'_>) -> anyhow::Result<()> {
+    if let Some(id) = jar
+        .get(USER_AUTH_COOKIE)
+        .and_then(|v| v.value().parse::<Uuid>().ok())
+    {
+        db::expire::<Token>(&id, chrono::Duration::seconds(1)).await?;
+    }
     jar.remove(Cookie::new(USER_AUTH_COOKIE, ""));
+
+    Ok(())
 }
 
 pub fn write_user(token: Token, jar: &CookieJar<'_>) {
@@ -52,14 +60,16 @@ impl<'r> rocket::request::FromRequest<'r> for User {
 
         if token.should_renew() {
             match Token::create_and_commit(&token).await {
-                Ok(token) => write_user(token, cookies),
+                #[allow(unused_must_use)]
+                Ok(token) => {
+                    remove_user(cookies).await;
+                    write_user(token, cookies)
+                }
                 _ => (),
             };
         }
 
-        let user = db::read::<User>(&token.associate).await;
-
-        match user {
+        match db::read::<User>(&token.associate).await {
             Ok(Some(user)) => Outcome::Success(user),
             _ => Outcome::Failure((Status::Unauthorized, AuthError::Invalid)),
         }

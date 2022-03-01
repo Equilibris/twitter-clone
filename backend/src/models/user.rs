@@ -44,7 +44,7 @@ impl PublicUser {
     }
 }
 
-const USER_INDEX_NAME: &str = "\"user\"";
+const USER_INDEX_NAME: &str = "user";
 
 impl User {
     pub fn new(name: String, password: String) -> Result<Self, std::array::TryFromSliceError> {
@@ -62,17 +62,15 @@ impl User {
     ) -> anyhow::Result<Option<Self>> {
         let name = name.replace(".", "\\.");
         let q = format!("@username:{{{}}}", name);
-        let result = db::exec_read_con::<FtQuery<Self>>(
-            redis::cmd("FT.SEARCH").arg(USER_INDEX_NAME).arg(q),
-            con,
-        )
-        .await?;
+        let result: FtQuery<Self> = redis::cmd("FT.SEARCH")
+            .arg(USER_INDEX_NAME)
+            .arg(q)
+            .query_async(con)
+            .await?;
 
-        Ok(result.and_then(|a| {
-            let v: Vec<Self> = a.into();
+        let result = result.values().into_iter().next();
 
-            v.into_iter().next()
-        }))
+        Ok(result)
     }
     pub async fn query_username(name: &str) -> anyhow::Result<Option<Self>> {
         let mut con = db::get_con().await?;
@@ -113,16 +111,13 @@ impl User {
     pub async fn ensure_index() -> anyhow::Result<()> {
         let mut con = db::get_con().await?;
 
-        match redis::cmd("FT.INFO")
+        if let Err(_) = redis::cmd("FT.INFO")
             .arg(USER_INDEX_NAME)
             .query_async::<redis::aio::Connection, ()>(&mut con)
             .await
         {
-            Ok(()) => (),
-            Err(_) => {
-                println!("Index does not exist for user, creating");
-                Self::create_index_con(&mut con).await?
-            }
+            println!("Index does not exist for user, creating");
+            Self::create_index_con(&mut con).await?
         }
 
         Ok(())

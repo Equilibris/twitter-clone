@@ -1,4 +1,5 @@
 #![feature(decl_macro, proc_macro_hygiene)]
+#![feature(async_closure)]
 
 mod api;
 mod db;
@@ -18,6 +19,7 @@ async fn main() -> anyhow::Result<()> {
     }
 
     crate::models::user::User::ensure_index().await?;
+    crate::models::post::Post::ensure_index().await?;
 
     let r = rocket::build();
     let r = crate::routes::mount(r);
