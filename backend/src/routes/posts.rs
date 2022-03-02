@@ -48,17 +48,17 @@ async fn feed(offset: usize) -> ApiResult<Vec<ApiResult<PublicPost, ()>>, PostEr
             return ApiResult::error(
                 url,
                 500,
-                PostError::UnknownError(format!("An unexpected error occurred: {}",e)),
+                PostError::UnknownError(format!("An unexpected error occurred: {}", e)),
             )
         }
     };
 
-    let feed = feed.key_values();
+    let feed = feed.values();
 
     let mut output = Vec::with_capacity(feed.len());
-    for (k, v) in feed {
+    for v in feed {
         output.push(ApiResult::data(
-            format!("/post/{}", k),
+            format!("/post/{}", v.uuid),
             PublicPost::new(v).await,
         ))
     }

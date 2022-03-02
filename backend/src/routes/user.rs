@@ -20,9 +20,9 @@ struct SignInAndUpData<'a> {
 
 #[derive(Serialize)]
 enum SignUpError {
-    UserCreationError(&'static str),
-    UserDbWriteError(&'static str),
-    UserAlreadyExistsError(&'static str),
+    UserCreation(&'static str),
+    UserDbWrite(&'static str),
+    UserAlreadyExists(&'static str),
     FailedToCreateToken(&'static str),
     BadUsername(String),
 }
@@ -74,7 +74,7 @@ async fn sign_up(
             return ApiResult::error(
                 url,
                 400,
-                SignUpError::UserAlreadyExistsError("User already exists"),
+                SignUpError::UserAlreadyExists("User already exists"),
             )
         }
     };
@@ -83,11 +83,7 @@ async fn sign_up(
     let user = match User::new(username.to_string(), data.password.to_string()) {
         Ok(x) => x,
         Err(_) => {
-            return ApiResult::error(
-                url,
-                400,
-                SignUpError::UserCreationError("Failed to create user"),
-            )
+            return ApiResult::error(url, 400, SignUpError::UserCreation("Failed to create user"))
         }
     };
     match db::write(&user).await {
@@ -96,7 +92,7 @@ async fn sign_up(
             return ApiResult::error(
                 url,
                 400,
-                SignUpError::UserDbWriteError("Failed to write user to db"),
+                SignUpError::UserDbWrite("Failed to write user to db"),
             )
         }
     }
@@ -178,7 +174,7 @@ pub async fn get_user(id: Uuid) -> GetUserResult {
         Ok(Some(usr)) => usr,
         Ok(None) => return ApiResult::error(url, 404, GetUserError::UserDoesNotExist(id)),
         Err(e) => {
-            println!("Error occured from db::read: {}", e);
+            println!("Error occurred from db::read: {}", e);
 
             let error = format!("Unknown error occured: {}", e);
             return ApiResult::error(url, 500, GetUserError::UnknownError(error));

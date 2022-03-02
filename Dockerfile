@@ -46,4 +46,4 @@ COPY --from=builder /backend/target/x86_64-unknown-linux-musl/release/backend ./
 # Use an unprivileged user.
 USER backend:backend
 
-CMD ["/backend/backend"]
+CMD ROCKET_PORT=$PORT ROCKET_ADDRESS=0.0.0.0 /backend/backend
