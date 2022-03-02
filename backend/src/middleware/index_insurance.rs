@@ -1,6 +1,5 @@
 use rocket::fairing::{Fairing, Info, Kind};
-use rocket::http::Header;
-use rocket::{Build, Request, Response, Rocket};
+use rocket::{Build, Rocket};
 
 use crate::models::post::Post;
 use crate::models::user::User;

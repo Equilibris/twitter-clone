@@ -6,7 +6,6 @@ use middleware::index_insurance;
 use crate::{
     env::{client, pepper},
     middleware::cors,
-    models::{post::Post, user::User},
 };
 
 mod api;

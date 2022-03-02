@@ -49,7 +49,4 @@ impl<T: FromRedisValue> FtQuery<T> {
     pub fn values(self) -> Vec<T> {
         self.container.into_iter().map(|(_, v)| v).collect()
     }
-    pub fn key_values(self) -> Vec<(String, T)> {
-        self.container
-    }
 }

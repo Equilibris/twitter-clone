@@ -1,4 +1,4 @@
-use rocket::http::{Cookie, CookieJar, Status};
+use rocket::http::{Cookie, CookieJar, SameSite, Status};
 use rocket::request::{Outcome, Request};
 use uuid::Uuid;
 
@@ -33,7 +33,8 @@ pub fn write_user(token: Token, jar: &CookieJar<'_>) {
 
     let mut cookie = Cookie::new(USER_AUTH_COOKIE, id.to_string());
     cookie.set_http_only(true);
-    // Expire after 3 days
+    cookie.set_same_site(SameSite::None);
+    // TODO: Expire after 3 days
 
     jar.add(cookie);
 }
