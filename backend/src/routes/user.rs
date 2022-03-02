@@ -5,7 +5,7 @@ use uuid::Uuid;
 use crate::{
     api::result::ApiResult,
     db,
-    middleware::user,
+    guards::user,
     models::{
         token::Token,
         user::{Me, PublicUser, User},

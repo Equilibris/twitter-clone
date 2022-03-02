@@ -1,9 +1,18 @@
 #![feature(decl_macro, proc_macro_hygiene)]
 #![feature(async_closure)]
 
+use middleware::index_insurance;
+
+use crate::{
+    env::{client, pepper},
+    middleware::cors,
+    models::{post::Post, user::User},
+};
+
 mod api;
 mod db;
 mod env;
+mod guards;
 mod middleware;
 mod models;
 mod routes;
@@ -14,15 +23,14 @@ extern crate rocket;
 #[rocket::main]
 async fn main() -> anyhow::Result<()> {
     unsafe {
-        crate::env::client::generate()?;
-        crate::env::pepper::generate();
+        client::generate()?;
+        pepper::generate();
     }
 
-    crate::models::user::User::ensure_index().await?;
-    crate::models::post::Post::ensure_index().await?;
-
-    let r = rocket::build();
-    let r = crate::routes::mount(r);
+    let r = rocket::build()
+        .attach(index_insurance::IndexInsurance)
+        .attach(cors::CORS);
+    let r = routes::mount(r);
 
     r.launch().await?;
 
