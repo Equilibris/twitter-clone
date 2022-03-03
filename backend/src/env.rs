@@ -67,3 +67,31 @@ pub(crate) mod pepper {
         buffer
     }
 }
+
+pub(crate) mod jwt_secret {
+    static mut JWT_SECRET_SINGLETON_OBJECT_REFERENCE: Option<String> = None;
+
+    pub fn get() -> &'static [u8] {
+        unsafe {
+            match &JWT_SECRET_SINGLETON_OBJECT_REFERENCE {
+                Some(x) => x.as_ref(),
+                None => generate(),
+            }
+        }
+    }
+    pub unsafe fn generate() -> &'static [u8] {
+        let v = std::env::var("JWT_SECRET");
+
+        JWT_SECRET_SINGLETON_OBJECT_REFERENCE = Some(if cfg!(debug_assertions) {
+            v.unwrap_or("no-secret".to_string())
+        } else {
+            v.expect("Missing env variable `JWT_SECRET`")
+        });
+
+        if let Some(x) = &JWT_SECRET_SINGLETON_OBJECT_REFERENCE {
+            x.as_ref()
+        } else {
+            panic!("Unreachable")
+        }
+    }
+}

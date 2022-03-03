@@ -1,15 +1,12 @@
-use rocket::{http::CookieJar, serde::json::Json, Build, Rocket};
+use rocket::{serde::json::Json, Build, Rocket};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use crate::{
-    api::result::ApiResult,
+    api::{result::ApiResult, token::Token},
     db,
-    guards::user,
-    models::{
-        token::Token,
-        user::{Me, PublicUser, User},
-    },
+    guards::tau::TAU,
+    models::user::{Me, PublicUser, User},
 };
 
 #[derive(Debug, Deserialize)]
@@ -23,7 +20,6 @@ enum SignUpError {
     UserCreation(&'static str),
     UserDbWrite(&'static str),
     UserAlreadyExists(&'static str),
-    FailedToCreateToken(&'static str),
     BadUsername(String),
 }
 
@@ -41,10 +37,7 @@ fn username_is_valid(s: &str) -> Result<(), (bool, char)> {
 
 // fetch("/user/sign_up",{method:"POST",body:JSON.stringify({name:'hello',password:'world'})}).then(x=>x.json()).then(console.log)
 #[post("/sign_up", data = "<data>")]
-async fn sign_up(
-    data: Json<SignInAndUpData<'_>>,
-    jar: &CookieJar<'_>,
-) -> ApiResult<Me, SignUpError> {
+async fn sign_up(data: Json<SignInAndUpData<'_>>) -> ApiResult<Me, SignUpError> {
     let url = "/user/sign_up".to_string();
     let username = data.name;
 
@@ -97,29 +90,16 @@ async fn sign_up(
         }
     }
 
-    let token = match Token::create_and_commit(&user).await {
-        Ok(token) => token,
-        Err(_) => {
-            return ApiResult::error(
-                url,
-                500,
-                SignUpError::FailedToCreateToken("Failed to create token."),
-            )
-        }
-    };
+    let token = Token::new(user.uuid);
 
-    user::write_user(token, jar);
-
-    ApiResult::data(url, Me::new(user))
+    ApiResult::data_with_token(url, Me::new(user), token)
 }
 
 const USER_DOES_NOT_EXIST: &str = "user does not exist";
 
+// FIXME: This is susceptible to timing attacks
 #[post("/sign_in", data = "<data>")]
-async fn sign_in(
-    data: Json<SignInAndUpData<'_>>,
-    jar: &CookieJar<'_>,
-) -> ApiResult<Me, &'static str> {
+async fn sign_in(data: Json<SignInAndUpData<'_>>) -> ApiResult<Me, &'static str> {
     let url = "/user/sign_in".to_string();
 
     let username = data.name;
@@ -138,22 +118,9 @@ async fn sign_in(
         return ApiResult::error(url, 404, USER_DOES_NOT_EXIST);
     }
 
-    let token = Token::create_and_commit(&user).await.ok();
-    if let Some(t) = token {
-        user::write_user(t, jar);
-    }
+    let token = Token::new(user.uuid);
 
-    ApiResult::data(url, Me::new(user))
-}
-
-#[post("/sign_out")] // FIXME: This leaks memory
-async fn sign_out(jar: &CookieJar<'_>) -> ApiResult<(), ()> {
-    #[allow(unused_must_use)]
-    {
-        user::remove_user(jar).await;
-    }
-
-    ApiResult::data("/user/sign_out".to_string(), ())
+    ApiResult::data_with_token(url, Me::new(user), token)
 }
 
 #[derive(Debug, Serialize)]
@@ -176,7 +143,7 @@ pub async fn get_user(id: Uuid) -> GetUserResult {
         Err(e) => {
             println!("Error occurred from db::read: {}", e);
 
-            let error = format!("Unknown error occured: {}", e);
+            let error = format!("Unknown error occurred: {}", e);
             return ApiResult::error(url, 500, GetUserError::UnknownError(error));
         }
     };
@@ -184,21 +151,17 @@ pub async fn get_user(id: Uuid) -> GetUserResult {
     ApiResult::data(url, PublicUser::new(user))
 }
 
-#[derive(Serialize)]
-struct MeError(&'static str);
-
 #[get("/me")]
-async fn me(user: User) -> ApiResult<Me, ()> {
-    ApiResult::data("/user/me".to_string(), Me::new(user))
+async fn me(tau: TAU) -> ApiResult<Me, ()> {
+    ApiResult::data_with_refresh_token("/user/me".to_string(), Me::new(tau.user), tau.token)
 }
+
 #[get("/me", rank = 2)]
-async fn me_fail() -> ApiResult<(), MeError> {
-    ApiResult::error("/user/me".to_string(), 401, MeError("Unauthenticated"))
+async fn me_fail() -> ApiResult<(), &'static str> {
+    ApiResult::error("/user/me".to_string(), 401, "Unauthenticated")
 }
 
 pub fn mount(rocket: Rocket<Build>) -> Rocket<Build> {
-    rocket.mount(
-        "/user",
-        routes![sign_up, get_user, me, me_fail, sign_in, sign_out],
-    )
+    // This does not error if registers sign_in twice
+    rocket.mount("/user", routes![get_user, me, me_fail, sign_in, sign_up])
 }
