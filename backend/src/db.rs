@@ -7,7 +7,7 @@ use serde_json::to_string;
 use uuid::Uuid;
 
 pub trait Idable {
-    fn get_id(self: &Self) -> Uuid;
+    fn get_id(&self) -> Uuid;
 }
 
 pub fn create_prefix<T>() -> String {

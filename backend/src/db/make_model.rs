@@ -22,7 +22,7 @@ macro_rules! make_model {
     };
     ($type:ident, $version_handeler:ident) => {
         impl crate::db::Idable for $type {
-            fn get_id(self: &Self) -> Uuid {
+            fn get_id(&self) -> Uuid {
                 self.uuid
             }
         }

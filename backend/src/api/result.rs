@@ -64,7 +64,7 @@ impl<T: Serialize, E: Serialize> ApiResult<T, E> {
     }
 
     #[inline]
-    pub fn status(self: &Self) -> u16 {
+    pub fn status(&self) -> u16 {
         if let Some((e, _)) = self.error {
             e
         } else {

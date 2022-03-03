@@ -25,7 +25,7 @@ impl Token {
         Self::new(self.sub)
     }
 
-    pub fn should_renew(self: &Self) -> bool {
+    pub fn should_renew(&self) -> bool {
         Utc::now() - self.exp > Duration::days(1)
     }
 
