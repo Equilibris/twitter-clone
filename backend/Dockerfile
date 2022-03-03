@@ -25,7 +25,7 @@ RUN adduser \
 
 WORKDIR /backend
 
-COPY ./backend/ .
+COPY ./ .
 
 RUN cargo +nightly build --target x86_64-unknown-linux-musl --release
 
