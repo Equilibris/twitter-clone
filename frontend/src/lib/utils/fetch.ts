@@ -1,12 +1,12 @@
 import type { Entry } from '../typings/api';
-import { DB_URL } from '$lib/constants/db_url';
+import { SERVER_URL } from '$lib/constants/server_url';
 
 export const get = async <entry extends Entry<unknown, unknown, unknown>>(
 	url: string
 ): Promise<entry['response']> => {
 	try {
 		const response = await (
-			await fetch(`${DB_URL}${url}`, {
+			await fetch(`${SERVER_URL}${url}`, {
 				credentials: 'include'
 			})
 		).json();
@@ -28,7 +28,7 @@ export const post = async <entry extends Entry<unknown, unknown, unknown>>(
 ): Promise<entry['response']> => {
 	try {
 		const response = await (
-			await fetch(`${DB_URL}${url}`, {
+			await fetch(`${SERVER_URL}${url}`, {
 				method: 'POST',
 				body: JSON.stringify(body),
 
