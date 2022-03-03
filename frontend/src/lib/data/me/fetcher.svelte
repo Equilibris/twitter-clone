@@ -10,13 +10,13 @@
 
 	const get_me = async () => {
 		// Content cacheing and Hytration insurence
-		if (typeof window !== 'undefined' && window.sessionStorage) {
-			const v = window.sessionStorage.getItem('user');
-			if (v)
-				try {
-					me.set(JSON.parse(v));
-				} catch (_) {}
-		}
+		// if (typeof window !== 'undefined' && window.sessionStorage) {
+		// 	const v = window.sessionStorage.getItem('user');
+		// 	if (v)
+		// 		try {
+		// 			me.set(JSON.parse(v));
+		// 		} catch (_) {}
+		// }
 
 		const result = await get<Paths['user']['me']>('/user/me');
 

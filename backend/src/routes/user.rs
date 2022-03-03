@@ -131,7 +131,7 @@ pub enum GetUserError {
 
 pub type GetUserResult = ApiResult<PublicUser, GetUserError>;
 // fetch("/user/3cc2d059-9098-4f1a-bab1-561f084561a3").then(x=>x.json()).then(console.log)
-#[get("/<id>")]
+#[get("/<id>", rank = 3)]
 pub async fn get_user(id: Uuid) -> GetUserResult {
     let url = format!("/user/{}", id);
 

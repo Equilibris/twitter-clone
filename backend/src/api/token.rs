@@ -33,7 +33,7 @@ impl Token {
         encode(
             &Header::default(),
             &self,
-            &EncodingKey::from_secret("secret".as_ref()),
+            &EncodingKey::from_secret(crate::env::jwt_secret::get()),
         )
     }
     pub fn decode(string: String) -> errors::Result<jsonwebtoken::TokenData<Token>> {

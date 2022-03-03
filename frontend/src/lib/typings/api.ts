@@ -4,6 +4,7 @@ export interface ApiResult<T, E> {
 	self: string;
 	data: T | null;
 	error: [number, E] | null;
+	refresh_token: string | null;
 }
 
 // ERRORS
