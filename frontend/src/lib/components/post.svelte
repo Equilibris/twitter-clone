@@ -8,6 +8,7 @@
 		font-weight: 900;
 	}
 	.content {
+		white-space: pre-line;
 		font-size: 1.5em;
 		margin: 0;
 	}
