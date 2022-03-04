@@ -48,7 +48,7 @@
 					}
 				},
 				{
-					rootMargin: '500px',
+					rootMargin: '1500px',
 					threshold: 0
 				}
 			);
