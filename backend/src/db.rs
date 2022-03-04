@@ -98,6 +98,9 @@ pub async fn bulk_read_con<Doc: DeserializeOwned + std::fmt::Debug>(
     ids: &Vec<Uuid>,
     con: &mut redis::aio::Connection,
 ) -> anyhow::Result<Vec<Option<Doc>>> {
+    if ids.len() == 0 {
+        return Ok(vec![]);
+    }
     let mut cmd = &mut redis::cmd("JSON.MGET");
 
     for id in ids {

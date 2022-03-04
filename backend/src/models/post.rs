@@ -87,9 +87,11 @@ impl Post {
         }
     }
 
-    pub async fn query_feed(offset: usize) -> anyhow::Result<FtQuery<Self>> {
-        let mut con = db::get_con().await?;
-
+    // TODO: This should have a start date specified
+    pub async fn query_feed_con(
+        offset: usize,
+        con: &mut redis::aio::Connection,
+    ) -> anyhow::Result<FtQuery<Self>> {
         // Maybe do some maths to read backwards? Will this be more expensive maybe?
         Ok(redis::cmd("FT.SEARCH")
             .arg(POST_INDEX_NAME)
@@ -100,8 +102,13 @@ impl Post {
             .arg("LIMIT")
             .arg(offset)
             .arg(25)
-            .query_async(&mut con)
+            .query_async(con)
             .await?)
+    }
+    pub async fn query_feed(offset: usize) -> anyhow::Result<FtQuery<Self>> {
+        let mut con = db::get_con().await?;
+
+        Ok(Self::query_feed_con(offset, &mut con).await?)
     }
 
     pub async fn create_index_con(con: &mut redis::aio::Connection) -> anyhow::Result<()> {

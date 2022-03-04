@@ -22,11 +22,16 @@ struct CreatePostData {
 enum PostError {
     UnknownError(String),
     PostDoesNotExist(String),
+    BadPost,
 }
 
 #[post("/create", data = "<data>")]
 async fn create(data: Json<CreatePostData>, tau: TAU) -> ApiResult<PublicPost, PostError> {
     let url = "/posts/create".to_string();
+
+    if data.message.len() > 150 {
+        return ApiResult::error(url, 400, PostError::BadPost);
+    }
 
     let user = tau.user;
 
