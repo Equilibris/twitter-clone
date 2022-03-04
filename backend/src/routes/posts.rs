@@ -14,8 +14,8 @@ use crate::{
 };
 
 #[derive(Deserialize)]
-struct CreatePostData<'a> {
-    message: &'a str,
+struct CreatePostData {
+    message: String,
 }
 
 #[derive(Serialize)]
@@ -25,13 +25,14 @@ enum PostError {
 }
 
 #[post("/create", data = "<data>")]
-async fn create(data: Json<CreatePostData<'_>>, tau: TAU) -> ApiResult<PublicPost, PostError> {
-    let message = data.message;
+async fn create(data: Json<CreatePostData>, tau: TAU) -> ApiResult<PublicPost, PostError> {
     let url = "/posts/create".to_string();
 
     let user = tau.user;
 
-    let post = Post::new(message.to_string(), &user);
+    let post = Post::new(data.message.to_owned(), &user);
+
+    println!("{:#?}", post);
 
     match db::write(&post).await {
         Err(e) => ApiResult::error_with_refresh_token(
@@ -44,6 +45,7 @@ async fn create(data: Json<CreatePostData<'_>>, tau: TAU) -> ApiResult<PublicPos
     }
 }
 
+// TODO: Basis value, where is starts using Date.now()
 #[get("/feed/<offset>")]
 async fn feed(offset: usize) -> ApiResult<Vec<ApiResult<PublicPost, ()>>, PostError> {
     let url = format!("/post/feed/{}", offset);
