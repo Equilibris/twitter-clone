@@ -14,7 +14,14 @@ impl Fairing for CORS {
     }
 
     async fn on_response<'r>(&self, _request: &'r Request<'_>, response: &mut Response<'r>) {
-        response.set_header(Header::new("Access-Control-Allow-Origin", "http://localhost:3000"));
+        response.set_header(Header::new(
+            "Access-Control-Allow-Origin",
+            if cfg!(debug_assertions) {
+                "http://localhost:3000"
+            } else {
+                "http://it1-twitter.herokuapp.com"
+            }
+            ));
         response.set_header(Header::new(
             "Access-Control-Allow-Methods",
             "POST, GET, PATCH, OPTIONS",

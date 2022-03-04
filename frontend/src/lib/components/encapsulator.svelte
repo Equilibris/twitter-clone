@@ -6,10 +6,10 @@
 
 	const signOut = async (e: Event) => {
 		e.preventDefault();
-		const result = await post<Paths['user']['sign_out']>('/user/sign_out', null);
 
-		if (window.sessionStorage) {
+		if (window.sessionStorage && window.localStorage) {
 			window.sessionStorage.removeItem('user');
+			window.localStorage.removeItem('refresh_token');
 		}
 
 		$me = null;

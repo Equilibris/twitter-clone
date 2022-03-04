@@ -1,14 +1,13 @@
 pub mod ftquery;
 pub mod make_model;
 
-use chrono::Duration;
 use redis::FromRedisValue;
 use serde::Serialize;
 use serde_json::to_string;
 use uuid::Uuid;
 
 pub trait Idable {
-    fn get_id(self: &Self) -> Uuid;
+    fn get_id(&self) -> Uuid;
 }
 
 pub fn create_prefix<T>() -> String {
@@ -91,29 +90,4 @@ pub async fn read<Doc: redis::FromRedisValue>(id: &Uuid) -> anyhow::Result<Optio
     let mut con = get_con().await?;
 
     read_con(id, &mut con).await
-}
-
-pub async fn expire_con<Doc: redis::FromRedisValue>(
-    id: &Uuid,
-    con: &mut redis::aio::Connection,
-    duration: Duration,
-) -> anyhow::Result<()> {
-    let id = convert_uuid::<Doc>(id);
-    let duration = duration.num_seconds();
-    redis::cmd("EXPIRE")
-        .arg(id)
-        .arg(duration)
-        .query_async(con)
-        .await?;
-
-    Ok(())
-}
-
-pub async fn expire<Doc: redis::FromRedisValue>(
-    id: &Uuid,
-    duration: Duration,
-) -> anyhow::Result<()> {
-    let mut con = get_con().await?;
-
-    expire_con::<Doc>(id, &mut con, duration).await
 }

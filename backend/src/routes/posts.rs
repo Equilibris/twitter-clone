@@ -4,10 +4,8 @@ use serde::{Deserialize, Serialize};
 use crate::{
     api::result::ApiResult,
     db,
-    models::{
-        post::{Post, PublicPost},
-        user::User,
-    },
+    guards::tau::TAU,
+    models::post::{Post, PublicPost},
 };
 
 #[derive(Deserialize)]
@@ -22,19 +20,26 @@ enum PostError {
 }
 
 #[post("/create", data = "<data>")]
-async fn create(data: Json<CreatePostData<'_>>, user: User) -> ApiResult<PublicPost, PostError> {
+async fn create(data: Json<CreatePostData<'_>>, tau: TAU) -> ApiResult<PublicPost, PostError> {
     let message = data.message;
     let url = "/posts/create".to_string();
+
+    let user = tau.user;
 
     let post = Post::new(message.to_string(), &user);
 
     match db::write(&post).await {
-        Err(e) => ApiResult::error(
+        Err(e) => ApiResult::error_with_refresh_token(
             url,
             500,
             PostError::UnknownError(format!("An unexpected error occurred: {}", e)),
+            tau.token,
         ),
-        _ => ApiResult::data(url, PublicPost::create_from_user_and_post(post, user)),
+        _ => ApiResult::data_with_refresh_token(
+            url,
+            PublicPost::create_from_user_and_post(post, user),
+            tau.token,
+        ),
     }
 }
 
