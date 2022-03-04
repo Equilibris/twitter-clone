@@ -2,6 +2,7 @@ pub mod ftquery;
 pub mod make_model;
 
 use redis::FromRedisValue;
+use rocket::serde::DeserializeOwned;
 use serde::Serialize;
 use serde_json::to_string;
 use uuid::Uuid;
@@ -90,4 +91,37 @@ pub async fn read<Doc: redis::FromRedisValue>(id: &Uuid) -> anyhow::Result<Optio
     let mut con = get_con().await?;
 
     read_con(id, &mut con).await
+}
+
+pub async fn bulk_read_con<Doc: DeserializeOwned + std::fmt::Debug>(
+    ids: &Vec<Uuid>,
+    con: &mut redis::aio::Connection,
+) -> anyhow::Result<Vec<Option<Doc>>> {
+    let mut cmd = &mut redis::cmd("JSON.MGET");
+
+    for id in ids {
+        let id = convert_uuid::<Doc>(id);
+        cmd = cmd.arg(id);
+    }
+
+    cmd = cmd.arg("$");
+
+    let result: Vec<String> = cmd.query_async(con).await?;
+
+    let mut output = Vec::with_capacity(result.len());
+
+    for i in result {
+        let v: Vec<Doc> = serde_json::de::from_str(i.as_str())?;
+        output.push(v.into_iter().next());
+    }
+
+    Ok(output)
+}
+
+pub async fn bulk_read<Doc: DeserializeOwned + std::fmt::Debug>(
+    id: &Vec<Uuid>,
+) -> anyhow::Result<Vec<Option<Doc>>> {
+    let mut con = get_con().await?;
+
+    Ok(bulk_read_con(id, &mut con).await?)
 }

@@ -33,7 +33,7 @@ pub struct PublicPost {
 }
 
 impl PublicPost {
-    pub async fn new(post: Post) -> Self {
+    pub async fn create(post: Post) -> Self {
         Self {
             uuid: post.uuid,
 
@@ -43,7 +43,20 @@ impl PublicPost {
             created_at: post.created_at,
         }
     }
-    pub fn create_from_user_and_post(post: Post, user: User) -> Self {
+    pub fn new_refed(post: Post, user: &User) -> Self {
+        Self {
+            uuid: post.uuid,
+
+            author: crate::api::result::ApiResult::data(
+                format!("/user/{}", user.uuid),
+                PublicUser::new_refed(user),
+            ),
+            message: post.message,
+
+            created_at: post.created_at,
+        }
+    }
+    pub fn new(post: Post, user: User) -> Self {
         Self {
             uuid: post.uuid,
 

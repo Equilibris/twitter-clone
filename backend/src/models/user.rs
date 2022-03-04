@@ -36,6 +36,12 @@ impl Me {
     }
 }
 impl PublicUser {
+    pub fn new_refed(user: &User) -> Self {
+        Self {
+            name: user.name.clone(),
+            uuid: user.uuid,
+        }
+    }
     pub fn new(user: User) -> Self {
         Self {
             name: user.name,
