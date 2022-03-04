@@ -32,8 +32,6 @@ async fn create(data: Json<CreatePostData>, tau: TAU) -> ApiResult<PublicPost, P
 
     let post = Post::new(data.message.to_owned(), &user);
 
-    println!("{:#?}", post);
-
     match db::write(&post).await {
         Err(e) => ApiResult::error_with_refresh_token(
             url,

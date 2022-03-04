@@ -20,8 +20,11 @@
 		me.set(result.data);
 
 		if (result.data && window.location) window.location.assign('/');
-		else if (result.error?.[1] && result.error?.[1]?.BadUsername)
-			error = result.error[1].BadUsername;
+		else if (result.error?.[1]) {
+			for (const e in result.error[1]) {
+				error = result.error[1][e];
+			}
+		}
 	};
 </script>
 

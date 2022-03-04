@@ -17,8 +17,6 @@
 
 		feed = feed;
 		isFetching = false;
-
-		console.log(feed);
 	};
 
 	get_results();
