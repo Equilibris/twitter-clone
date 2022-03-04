@@ -1,5 +1,6 @@
 pub mod ftquery;
 pub mod make_model;
+pub mod sanitizer;
 
 use redis::FromRedisValue;
 use rocket::serde::DeserializeOwned;

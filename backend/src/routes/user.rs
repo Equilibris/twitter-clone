@@ -63,12 +63,21 @@ async fn sign_up(data: Json<SignInAndUpData<'_>>) -> ApiResult<Me, SignUpError> 
     // OMG THIS PAIN
     match User::query_username(username).await {
         Ok(None) => (),
-        _ => {
+        Ok(_) => {
             return ApiResult::error(
                 url,
                 400,
                 SignUpError::UserAlreadyExists("User already exists"),
-            )
+            );
+        }
+        Err(e) => {
+            println!("Error: {e}");
+            
+            return ApiResult::error(
+                url,
+                400,
+                SignUpError::BadUsername("Some shit gon bad".to_string()),
+            );
         }
     };
 

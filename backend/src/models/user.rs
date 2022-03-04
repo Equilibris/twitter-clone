@@ -81,7 +81,7 @@ impl User {
     pub async fn query_username(name: &str) -> anyhow::Result<Option<Self>> {
         let mut con = db::get_con().await?;
 
-        Self::query_username_con(name, &mut con).await
+        Self::query_username_con(db::sanitizer::sanitizer(name).as_str(), &mut con).await
     }
 
     pub async fn create_index_con(con: &mut redis::aio::Connection) -> anyhow::Result<()> {
