@@ -36,7 +36,7 @@
 			<label for="password">password </label>
 			<input type="password" name="password" bind:value={password} />
 
-			<button>Sign in</button>
+			<button>Sign up</button>
 
 			{#if error}
 				<p class="error">

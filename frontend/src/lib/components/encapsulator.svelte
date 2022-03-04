@@ -3,6 +3,7 @@
 	import { me } from '$lib/data/me/store';
 	import type { Paths } from '$lib/typings/api';
 	import { post } from '$lib/utils/fetch';
+	import Anchor from './anchor.svelte';
 
 	const signOut = async (e: Event) => {
 		e.preventDefault();
@@ -18,13 +19,15 @@
 
 <main>
 	<header>
-		<b>Shwitter</b>
+		<Anchor href="/">
+			<b>Shwitter</b>
+		</Anchor>
 		{#if $me}
 			<a on:click={signOut} href="/">Sign out</a>
 		{:else}
 			<div>
-				<a href="/sign_in">Sign in</a> |
-				<a href="/sign_up">Sign up</a>
+				<Anchor href="/sign_in">Sign in</Anchor> |
+				<Anchor href="/sign_up">Sign up</Anchor>
 			</div>
 		{/if}
 	</header>

@@ -8,11 +8,12 @@
 	import { onMount } from 'svelte';
 
 	let feed: PublicPost[] = [];
-	let isFetching = true;
+	let isFetching = false;
 
 	const get_results = async () => {
-		const results = await get<Paths['post']['feed']>(`/post/feed/${feed.length}`);
+		isFetching = true;
 
+		const results = await get<Paths['post']['feed']>(`/post/feed/${feed.length}`);
 		for (const result of results.data || []) if (result.data) feed.push(result.data);
 
 		feed = feed;
@@ -40,13 +41,14 @@
 		if (typeof IntersectionObserver !== 'undefined') {
 			const io = new IntersectionObserver(
 				async (v) => {
+					console.log(v, isFetching);
 					if (v[0].isIntersecting && !isFetching) {
 						isFetching = true;
 						await get_results();
 					}
 				},
 				{
-					rootMargin: '1500px',
+					rootMargin: '1000px',
 					threshold: 0
 				}
 			);
