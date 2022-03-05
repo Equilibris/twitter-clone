@@ -1,11 +1,11 @@
 <script lang="ts">
 	import Encapsulator from '$lib/components/encapsulator.svelte';
 	import Post from '$lib/components/post.svelte';
+	import CbOnBottom from '$lib/components/cbOnBottom.svelte';
 
-	import type { Paths, PublicPost } from '$lib/typings/api';
+	import type { PublicPost } from '$lib/typings/api';
 	import { paths } from '$lib/utils/fetch';
 	import { me } from '$lib/data/me/store';
-	import { onMount } from 'svelte';
 
 	let feed: PublicPost[] = [];
 	let isFetching = false;
@@ -34,30 +34,6 @@
 			message = '';
 		}
 	};
-
-	let ioContainer: HTMLDivElement;
-
-	onMount(() => {
-		if (typeof IntersectionObserver !== 'undefined') {
-			const io = new IntersectionObserver(
-				async (v) => {
-					console.log(v, isFetching);
-					if (v[0].isIntersecting && !isFetching) {
-						isFetching = true;
-						await get_results();
-					}
-				},
-				{
-					rootMargin: '1000px',
-					threshold: 0,
-				},
-			);
-
-			io.observe(ioContainer);
-
-			return () => io.unobserve(ioContainer);
-		}
-	});
 </script>
 
 <Encapsulator>
@@ -78,7 +54,14 @@
 					{result.message}
 				</Post>
 			{/each}
-			<div id="intersector" bind:this={ioContainer} />
+			<CbOnBottom
+				on:intersect={async (v) => {
+					if (v && !isFetching) {
+						isFetching = true;
+						await get_results();
+					}
+				}}
+			/>
 		</div>
 	</div>
 </Encapsulator>
