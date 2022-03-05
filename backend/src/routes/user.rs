@@ -60,7 +60,6 @@ async fn sign_up(data: Json<SignInAndUpData<'_>>) -> ApiResult<Me, SignUpError> 
         _ => (),
     }
 
-    // OMG THIS PAIN
     match User::query_username(username).await {
         Ok(None) => (),
         Ok(_) => {
@@ -72,7 +71,7 @@ async fn sign_up(data: Json<SignInAndUpData<'_>>) -> ApiResult<Me, SignUpError> 
         }
         Err(e) => {
             println!("Error: {e}");
-            
+
             return ApiResult::error(
                 url,
                 400,
@@ -135,6 +134,7 @@ async fn sign_in(data: Json<SignInAndUpData<'_>>) -> ApiResult<Me, &'static str>
 #[derive(Debug, Serialize)]
 pub enum GetUserError {
     UserDoesNotExist(Uuid),
+    UsernameIsNotUsed(String),
     UnknownError(String),
 }
 
@@ -144,11 +144,29 @@ pub type GetUserResult = ApiResult<PublicUser, GetUserError>;
 pub async fn get_user(id: Uuid) -> GetUserResult {
     let url = format!("/user/{}", id);
 
-    let id = id.into();
-
     let user = match db::read::<User>(&id).await {
         Ok(Some(usr)) => usr,
         Ok(None) => return ApiResult::error(url, 404, GetUserError::UserDoesNotExist(id)),
+        Err(e) => {
+            println!("Error occurred from db::read: {}", e);
+
+            let error = format!("Unknown error occurred: {}", e);
+            return ApiResult::error(url, 500, GetUserError::UnknownError(error));
+        }
+    };
+
+    ApiResult::data(url, PublicUser::new(user))
+}
+
+#[get("/by_name/<name>")]
+async fn get_by_name(name: &str) -> ApiResult<PublicUser, GetUserError> {
+    let url = format!("/user/by_name/{}", name);
+
+    let user = match User::query_username(name).await {
+        Ok(Some(usr)) => usr,
+        Ok(None) => {
+            return ApiResult::error(url, 404, GetUserError::UsernameIsNotUsed(name.to_string()))
+        }
         Err(e) => {
             println!("Error occurred from db::read: {}", e);
 
@@ -172,5 +190,8 @@ async fn me_fail() -> ApiResult<(), &'static str> {
 
 pub fn mount(rocket: Rocket<Build>) -> Rocket<Build> {
     // This does not error if registers sign_in twice
-    rocket.mount("/user", routes![get_user, me, me_fail, sign_in, sign_up])
+    rocket.mount(
+        "/user",
+        routes![get_user, get_by_name, me, me_fail, sign_in, sign_up],
+    )
 }

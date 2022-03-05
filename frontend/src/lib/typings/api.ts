@@ -10,7 +10,15 @@ export interface ApiResult<T, E> {
 // ERRORS
 
 export type PostError = RequireExactlyOne<{ UnknownError: string; PostDoesNotExist: string }>;
-export type GetUserError = RequireExactlyOne<{ UserDoesNotExist: string; UnknownError: string }>;
+export type GetUserError = RequireExactlyOne<{
+	UserDoesNotExist: string;
+	UnknownError: string;
+	UsernameIsNotUsed: string;
+}>;
+export type AuthorFeedError = RequireExactlyOne<{
+	AuthorDoesNotExist: string;
+	DbAccessError: string;
+}>;
 export type SignUpError = RequireExactlyOne<{
 	UserCreation: string;
 	UserDbWrite: string;
@@ -52,18 +60,4 @@ export interface SignInAndUpData {
 export type Entry<Req, Res, ResErr> = {
 	request: Req;
 	response: ApiResult<Res, ResErr>;
-};
-
-export type Paths = {
-	post: {
-		create: Entry<CreatePostData, PublicPost, PostError>;
-		feed: Entry<null, ApiResult<PublicPost, null>[], PostError>;
-	};
-	user: {
-		sign_up: Entry<SignInAndUpData, Me, SignUpError>;
-		sign_in: Entry<SignInAndUpData, Me, string>;
-		sign_out: Entry<null, null, null>;
-		get_user: Entry<null, PublicUser, GetUserError>;
-		me: Entry<null, Me, string>;
-	};
 };

@@ -1,4 +1,16 @@
-import type { Entry, Paths } from '../typings/api';
+import type {
+	ApiResult,
+	AuthorFeedError,
+	CreatePostData,
+	Entry,
+	GetUserError,
+	Me,
+	PostError,
+	PublicPost,
+	PublicUser,
+	SignInAndUpData,
+	SignUpError,
+} from '../typings/api';
 import { SERVER_URL } from '$lib/constants/server_url';
 
 const getRefreshToken = () =>
@@ -74,25 +86,29 @@ const post = async <entry extends Entry<unknown, unknown, unknown>>(
 };
 
 const curryGet =
-	<entry extends Entry<null, unknown, unknown>, params extends unknown[]>(url: string) =>
+	<T, E, params extends unknown[]>(url: string) =>
 	(...params: params) =>
-		get<entry>(`${url}${params.join('/')}`);
+		get<Entry<null, T, E>>(`${url}${params.join('/')}`);
 
 const curryPost =
-	<entry extends Entry<unknown, unknown, unknown>>(url: string) =>
-	(data: entry['request']) =>
-		post<entry>(url, data);
+	<R, T, E>(url: string) =>
+	(data: R) =>
+		post<Entry<R, T, E>>(url, data);
 
 export const paths = {
 	post: {
-		create: curryPost<Paths['post']['create']>('/post/create'),
-		feed: curryGet<Paths['post']['feed'], [number]>('/post/feed/'),
+		create: curryPost<CreatePostData, PublicPost, PostError>('/post/create'),
+		feed: curryGet<ApiResult<PublicPost, null>[], PostError, [number]>('/post/feed/'),
+		authorFeed: curryGet<ApiResult<PublicPost, null>[], AuthorFeedError, [string, number]>(
+			'/post/',
+		),
 	},
 	user: {
-		signIn: curryPost<Paths['user']['sign_in']>('/user/sign_in'),
-		signUp: curryPost<Paths['user']['sign_up']>('/user/sign_up'),
-		signOut: curryPost<Paths['user']['sign_out']>('/user/sign_out'),
-		me: curryGet<Paths['user']['me'], []>('/user/me'),
-		getUser: curryGet<Paths['user']['get_user'], [string]>('/user/get_user'),
+		signUp: curryPost<SignInAndUpData, Me, SignUpError>('/user/sign_up'),
+		signIn: curryPost<SignInAndUpData, Me, string>('/user/sign_in'),
+		signOut: curryPost<null, null, null>('/user/sign_out'),
+		getUser: curryGet<PublicUser, GetUserError, [string]>('/user/get_user/'),
+		getByName: curryGet<PublicUser, GetUserError, [string]>('/user/by_name/'),
+		me: curryGet<Me, string, []>('/user/me'),
 	},
 };

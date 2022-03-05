@@ -1,6 +1,18 @@
+<script lang="ts">
+	import Anchor from '$lib/components/anchor.svelte';
+
+	export let authorHref = '';
+</script>
+
 <article>
 	<p class="content"><slot /></p>
-	<p class="header">@<slot name="author">[[FAILED TO FETCH AUTHOR]]</slot></p>
+	<p class="header">
+		@{#if !authorHref}
+			<slot name="author" />
+		{:else}<Anchor href={`/user/${authorHref}`}>
+				<slot name="author" />
+			</Anchor>{/if}
+	</p>
 </article>
 
 <style lang="scss">

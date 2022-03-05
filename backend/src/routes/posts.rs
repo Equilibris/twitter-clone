@@ -1,7 +1,8 @@
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 
 use rocket::{serde::json::Json, Build, Rocket};
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
 use crate::{
     api::result::ApiResult,
@@ -68,14 +69,10 @@ async fn feed(offset: usize) -> ApiResult<Vec<ApiResult<PublicPost, ()>>, PostEr
 
     let mut output = Vec::with_capacity(feed.len());
     let mut name_map = HashMap::with_capacity(feed.len());
-    let mut set = HashSet::with_capacity(feed.len());
     let mut read_ids = Vec::with_capacity(feed.len());
 
     for i in feed.iter() {
-        if !set.contains(&i.author) {
-            read_ids.push(i.author);
-            set.insert(i.author);
-        }
+        read_ids.push(i.author);
     }
     for v in match db::bulk_read::<User>(&read_ids).await {
         Ok(x) => x,
@@ -104,6 +101,54 @@ async fn feed(offset: usize) -> ApiResult<Vec<ApiResult<PublicPost, ()>>, PostEr
     ApiResult::data(url, output)
 }
 
+#[derive(Serialize)]
+enum AuthorFeedError {
+    AuthorDoesNotExist(&'static str),
+    DbAccessError(String),
+}
+
+#[get("/<author>/<offset>")]
+async fn author_feed(
+    author: Uuid,
+    offset: usize,
+) -> ApiResult<Vec<ApiResult<PublicPost, ()>>, AuthorFeedError> {
+    let url = format!("/post/{}/{}", author, offset);
+
+    let feed = match Post::query_author_feed(&author, offset).await {
+        Ok(feed) => feed.values(),
+        Err(e) => {
+            return ApiResult::error(
+                url,
+                500,
+                AuthorFeedError::DbAccessError(format!("Failed to query for posts: {}", e)),
+            );
+        }
+    };
+
+    let author = match db::read::<User>(&author).await {
+        Ok(Some(v)) => v,
+
+        _ => {
+            return ApiResult::error(
+                url,
+                404,
+                AuthorFeedError::AuthorDoesNotExist("Author does not exist"),
+            )
+        }
+    };
+
+    let mut output = Vec::with_capacity(feed.len());
+
+    for i in feed {
+        output.push(ApiResult::data(
+            format!("/post/{}", i.uuid),
+            PublicPost::new_refed(i, &author),
+        ))
+    }
+
+    ApiResult::data(url, output)
+}
+
 #[get("/<id>")]
 async fn get(id: uuid::Uuid) -> ApiResult<PublicPost, PostError> {
     let url = format!("/post/{}", id);
@@ -122,5 +167,5 @@ async fn get(id: uuid::Uuid) -> ApiResult<PublicPost, PostError> {
     ApiResult::data(url, PublicPost::create(post).await)
 }
 pub fn mount(rocket: Rocket<Build>) -> Rocket<Build> {
-    rocket.mount("/post", routes![create, get, feed])
+    rocket.mount("/post", routes![create, get, feed, author_feed])
 }

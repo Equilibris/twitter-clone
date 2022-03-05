@@ -111,6 +111,34 @@ impl Post {
         Ok(Self::query_feed_con(offset, &mut con).await?)
     }
 
+    pub async fn query_author_feed_con(
+        author: &Uuid,
+        offset: usize,
+        con: &mut redis::aio::Connection,
+    ) -> anyhow::Result<FtQuery<Self>> {
+        let q = format!(
+            "@author:{{{}}}",
+            db::sanitizer::sanitizer(author.to_string().as_str())
+        );
+
+        Ok(redis::cmd("FT.SEARCH")
+            .arg(POST_INDEX_NAME)
+            .arg(q)
+            .arg("SORTBY")
+            .arg("feed")
+            .arg("DESC")
+            .arg("LIMIT")
+            .arg(offset)
+            .arg(25)
+            .query_async(con)
+            .await?)
+    }
+    pub async fn query_author_feed(author: &Uuid, offset: usize) -> anyhow::Result<FtQuery<Self>> {
+        let mut con = db::get_con().await?;
+
+        Ok(Self::query_author_feed_con(author, offset, &mut con).await?)
+    }
+
     pub async fn create_index_con(con: &mut redis::aio::Connection) -> anyhow::Result<()> {
         let _: () = redis::cmd("FT.CREATE")
             .arg(POST_INDEX_NAME)
@@ -131,6 +159,13 @@ impl Post {
             .arg("AS")
             .arg("search")
             .arg("TEXT")
+            // Author search
+            .arg("$.author")
+            .arg("AS")
+            .arg("author")
+            .arg("TAG")
+            .arg("SEPARATOR")
+            .arg("@")
             // Exec
             .query_async(con)
             .await?;
