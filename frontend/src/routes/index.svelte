@@ -3,7 +3,7 @@
 	import Post from '$lib/components/post.svelte';
 
 	import type { Paths, PublicPost } from '$lib/typings/api';
-	import { get, post } from '$lib/utils/fetch';
+	import { paths } from '$lib/utils/fetch';
 	import { me } from '$lib/data/me/store';
 	import { onMount } from 'svelte';
 
@@ -13,7 +13,7 @@
 	const get_results = async () => {
 		isFetching = true;
 
-		const results = await get<Paths['post']['feed']>(`/post/feed/${feed.length}`);
+		const results = await paths.post.feed(feed.length);
 		for (const result of results.data || []) if (result.data) feed.push(result.data);
 
 		feed = feed;
@@ -27,7 +27,7 @@
 	const handlePost = async (e: Event) => {
 		e.preventDefault();
 
-		const result = await post<Paths['post']['create']>('/post/create', { message });
+		const result = await paths.post.create({ message });
 
 		if (result.data) {
 			feed = [result.data, ...feed];
@@ -49,8 +49,8 @@
 				},
 				{
 					rootMargin: '1000px',
-					threshold: 0
-				}
+					threshold: 0,
+				},
 			);
 
 			io.observe(ioContainer);

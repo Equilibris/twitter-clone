@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { me } from './store';
-	import { get } from '$lib/utils/fetch';
-	import type { Paths } from '$lib/typings/api';
+	import { paths } from '$lib/utils/fetch';
 	import { onDestroy } from 'svelte';
 
 	const unsubscribe = me.subscribe((v) => {
@@ -18,8 +17,7 @@
 		// 		} catch (_) {}
 		// }
 
-		const result = await get<Paths['user']['me']>('/user/me');
-
+		const result = await paths.user.me();
 		if (result.data) me.set(result.data);
 	};
 	get_me();

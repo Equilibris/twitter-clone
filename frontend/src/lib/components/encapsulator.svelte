@@ -1,8 +1,6 @@
 <script lang="ts">
 	import Fetcher from '$lib/data/me/fetcher.svelte';
 	import { me } from '$lib/data/me/store';
-	import type { Paths } from '$lib/typings/api';
-	import { post } from '$lib/utils/fetch';
 	import Anchor from './anchor.svelte';
 
 	const signOut = async (e: Event) => {

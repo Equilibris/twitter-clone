@@ -1,7 +1,7 @@
 <script lang="ts">
 	import Encapsulator from '$lib/components/encapsulator.svelte';
 	import type { Paths } from '$lib/typings/api';
-	import { post } from '$lib/utils/fetch';
+	import { paths } from '$lib/utils/fetch';
 	import { me } from '$lib/data/me/store';
 
 	let password = '';
@@ -12,9 +12,9 @@
 	const handleSubmit = async (e: Event) => {
 		e.preventDefault();
 
-		const result = await post<Paths['user']['sign_in']>('/user/sign_in', {
+		const result = await paths.user.signIn({
 			name,
-			password
+			password,
 		});
 
 		me.set(result.data);
