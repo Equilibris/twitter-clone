@@ -10,11 +10,14 @@
 
 	let feed: PublicPost[] = [];
 	let isFetching = false;
+	let done = false;
 
 	const get_results = async () => {
 		isFetching = true;
 
 		const results = await paths.post.feed(feed.length);
+
+		done = results.data.length == 0;
 		for (const result of results.data || []) if (result.data) feed.push(result.data);
 
 		feed = feed;
@@ -54,14 +57,16 @@
 				{result.message}
 			</Post>
 		{/each}
-		<CbOnBottom
-			on:intersect={async (v) => {
-				if (v && !isFetching) {
-					isFetching = true;
-					await get_results();
-				}
-			}}
-		/>
+		{#if !done}
+			<CbOnBottom
+				on:intersect={async (v) => {
+					if (v && !isFetching) {
+						isFetching = true;
+						await get_results();
+					}
+				}}
+			/>
+		{/if}
 	</CenterContainer>
 </Encapsulator>
 

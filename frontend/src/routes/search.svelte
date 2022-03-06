@@ -11,12 +11,15 @@
 	const query = $page.url.searchParams.get('query');
 
 	let isFetching = true;
+	let done = false;
 
 	let feed: PublicPost[] = [];
 
 	const get_results = async () => {
 		if (query) {
 			const results = await paths.post.search(query, feed.length);
+
+			done = results.data.length == 0;
 			for (const result of results.data || []) if (result.data) feed.push(result.data);
 
 			feed = feed;
@@ -37,13 +40,15 @@
 				{result.message}
 			</Post>
 		{/each}
-		<CbOnBottom
-			on:intersect={async (v) => {
-				if (v && !isFetching) {
-					isFetching = true;
-					await get_results();
-				}
-			}}
-		/>
+		{#if !done}
+			<CbOnBottom
+				on:intersect={async (v) => {
+					if (v && !isFetching) {
+						isFetching = true;
+						await get_results();
+					}
+				}}
+			/>
+		{/if}
 	</CenterContainer>
 </Encapsulator>

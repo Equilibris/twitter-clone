@@ -21,6 +21,7 @@
 	export let data: ApiResult<PublicUser, GetUserError>;
 
 	let isFetching = true;
+	let done = false;
 
 	const user = data.data;
 
@@ -29,6 +30,8 @@
 	const get_results = async () => {
 		if (user) {
 			const results = await paths.post.authorFeed(user.uuid, feed.length);
+
+			done = results.data.length == 0;
 			for (const result of results.data || []) if (result.data) feed.push(result.data);
 
 			feed = feed;
@@ -52,14 +55,16 @@
 					{result.message}
 				</Post>
 			{/each}
-			<CbOnBottom
-				on:intersect={async (v) => {
-					if (v && !isFetching) {
-						isFetching = true;
-						await get_results();
-					}
-				}}
-			/>
+			{#if !done}
+				<CbOnBottom
+					on:intersect={async (v) => {
+						if (v && !isFetching) {
+							isFetching = true;
+							await get_results();
+						}
+					}}
+				/>
+			{/if}
 		{:else}
 			<h1>Oh shit an error occured (404)</h1>
 		{/if}
