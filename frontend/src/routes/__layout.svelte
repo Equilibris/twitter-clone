@@ -1,7 +1,7 @@
 <script lang="ts">
 	import Fetcher from '$lib/data/me/fetcher.svelte';
 	import { me } from '$lib/data/me/store';
-	import Anchor from './anchor.svelte';
+	import Anchor from '$lib/components/anchor.svelte';
 
 	const signOut = async (e: Event) => {
 		e.preventDefault();

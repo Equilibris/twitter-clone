@@ -1,5 +1,4 @@
 <script lang="ts">
-	import Encapsulator from '$lib/components/encapsulator.svelte';
 	import Post from '$lib/components/post.svelte';
 	import CbOnBottom from '$lib/components/cbOnBottom.svelte';
 
@@ -40,35 +39,33 @@
 	};
 </script>
 
-<Encapsulator>
-	<CenterContainer>
-		{#if $me}
-			<form on:submit={handlePost}>
-				<textarea name="message" cols="30" rows="10" bind:value={message} />
-				<button>Post</button>
-			</form>
-		{/if}
+<CenterContainer>
+	{#if $me}
+		<form on:submit={handlePost}>
+			<textarea name="message" cols="30" rows="10" bind:value={message} />
+			<button>Post</button>
+		</form>
+	{/if}
 
-		{#each feed as result}
-			<Post authorHref={result.author.data.name}>
-				<svelte:fragment slot="author">
-					{result.author.data.name}
-				</svelte:fragment>
-				{result.message}
-			</Post>
-		{/each}
-		{#if !done}
-			<CbOnBottom
-				on:intersect={async (v) => {
-					if (v && !isFetching) {
-						isFetching = true;
-						await get_results();
-					}
-				}}
-			/>
-		{/if}
-	</CenterContainer>
-</Encapsulator>
+	{#each feed as result}
+		<Post authorHref={result.author.data.name}>
+			<svelte:fragment slot="author">
+				{result.author.data.name}
+			</svelte:fragment>
+			{result.message}
+		</Post>
+	{/each}
+	{#if !done}
+		<CbOnBottom
+			on:intersect={async (v) => {
+				if (v && !isFetching) {
+					isFetching = true;
+					await get_results();
+				}
+			}}
+		/>
+	{/if}
+</CenterContainer>
 
 <style lang="scss">
 	form {

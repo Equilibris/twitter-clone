@@ -98,7 +98,7 @@ impl User {
             .arg("AS")
             .arg("name")
             .arg("TEXT")
-            .arg("NOSTEM") // TODO: Find out what this is
+            .arg("NOSTEM") 
             .arg("SORTABLE")
             // Username match
             .arg("$.name")

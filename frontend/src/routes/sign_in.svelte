@@ -1,6 +1,4 @@
 <script lang="ts">
-	import Encapsulator from '$lib/components/encapsulator.svelte';
-	import type { Paths } from '$lib/typings/api';
 	import { paths } from '$lib/utils/fetch';
 	import { me } from '$lib/data/me/store';
 
@@ -24,24 +22,22 @@
 	};
 </script>
 
-<Encapsulator>
-	<div class="container">
-		<form on:submit={handleSubmit}>
-			<label for="name">name</label>
-			<input type="text" name="name" bind:value={name} />
-			<label for="password">password </label>
-			<input type="password" name="password" bind:value={password} />
+<div class="container">
+	<form on:submit={handleSubmit}>
+		<label for="name">name</label>
+		<input type="text" name="name" bind:value={name} />
+		<label for="password">password </label>
+		<input type="password" name="password" bind:value={password} />
 
-			<button>Sign in</button>
+		<button>Sign in</button>
 
-			{#if error}
-				<p class="error">
-					{error}
-				</p>
-			{/if}
-		</form>
-	</div>
-</Encapsulator>
+		{#if error}
+			<p class="error">
+				{error}
+			</p>
+		{/if}
+	</form>
+</div>
 
 <style lang="scss">
 	form {
