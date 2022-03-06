@@ -139,6 +139,31 @@ impl Post {
         Ok(Self::query_author_feed_con(author, offset, &mut con).await?)
     }
 
+    // TODO: Stop-words and levenshtein distance functions..
+    pub async fn search_con(
+        term: &str,
+        offset: usize,
+        con: &mut redis::aio::Connection,
+    ) -> anyhow::Result<FtQuery<Self>> {
+        let q = db::sanitizer::sanitizer(term);
+
+        println!("{}", q);
+
+        Ok(redis::cmd("FT.SEARCH")
+            .arg(POST_INDEX_NAME)
+            .arg(q)
+            .arg("LIMIT")
+            .arg(offset)
+            .arg(25)
+            .query_async(con)
+            .await?)
+    }
+    pub async fn search(term: &str, offset: usize) -> anyhow::Result<FtQuery<Self>> {
+        let mut con = db::get_con().await?;
+
+        Ok(Self::search_con(term, offset, &mut con).await?)
+    }
+
     pub async fn create_index_con(con: &mut redis::aio::Connection) -> anyhow::Result<()> {
         let _: () = redis::cmd("FT.CREATE")
             .arg(POST_INDEX_NAME)

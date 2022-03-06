@@ -20,6 +20,10 @@
 		<Anchor href="/">
 			<b>Shwitter</b>
 		</Anchor>
+		<form action="/search">
+			<input type="text" name="query" />
+			<button>Search</button>
+		</form>
 		{#if $me}
 			<a on:click={signOut} href="/">Sign out</a>
 		{:else}

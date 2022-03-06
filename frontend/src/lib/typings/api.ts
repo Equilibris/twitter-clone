@@ -15,7 +15,7 @@ export type GetUserError = RequireExactlyOne<{
 	UnknownError: string;
 	UsernameIsNotUsed: string;
 }>;
-export type AuthorFeedError = RequireExactlyOne<{
+export type FeedError = RequireExactlyOne<{
 	AuthorDoesNotExist: string;
 	DbAccessError: string;
 }>;

@@ -1,6 +1,6 @@
 import type {
 	ApiResult,
-	AuthorFeedError,
+	FeedError,
 	CreatePostData,
 	Entry,
 	GetUserError,
@@ -99,9 +99,8 @@ export const paths = {
 	post: {
 		create: curryPost<CreatePostData, PublicPost, PostError>('/post/create'),
 		feed: curryGet<ApiResult<PublicPost, null>[], PostError, [number]>('/post/feed/'),
-		authorFeed: curryGet<ApiResult<PublicPost, null>[], AuthorFeedError, [string, number]>(
-			'/post/',
-		),
+		authorFeed: curryGet<ApiResult<PublicPost, null>[], FeedError, [string, number]>('/post/'),
+		search: curryGet<ApiResult<PublicPost, null>[], FeedError, [string, number]>('/post/search/'),
 	},
 	user: {
 		signUp: curryPost<SignInAndUpData, Me, SignUpError>('/user/sign_up'),

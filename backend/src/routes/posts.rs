@@ -49,13 +49,47 @@ async fn create(data: Json<CreatePostData>, tau: TAU) -> ApiResult<PublicPost, P
     }
 }
 
+async fn extract_name_map(values: &Vec<Post>) -> anyhow::Result<HashMap<Uuid, User>> {
+    let mut name_map = HashMap::with_capacity(values.len());
+    let mut read_ids = Vec::with_capacity(values.len());
+
+    for i in values.iter() {
+        read_ids.push(i.author);
+    }
+
+    for v in db::bulk_read::<User>(&read_ids).await? {
+        if let Some(v) = v {
+            name_map.insert(v.uuid, v);
+        }
+    }
+
+    Ok(name_map)
+}
+fn transform_to_output(
+    values: Vec<Post>,
+    name_map: HashMap<Uuid, User>,
+) -> Vec<ApiResult<PublicPost, ()>> {
+    let mut output = Vec::with_capacity(values.len());
+
+    for v in values {
+        if let Some(author) = name_map.get(&v.author) {
+            output.push(ApiResult::data(
+                format!("/post/{}", v.uuid),
+                PublicPost::new_refed(v, author),
+            ))
+        }
+    }
+
+    output
+}
+
 // TODO: Basis value, where is starts using Date.now()
 #[get("/feed/<offset>")]
 async fn feed(offset: usize) -> ApiResult<Vec<ApiResult<PublicPost, ()>>, PostError> {
     let url = format!("/post/feed/{}", offset);
 
     let feed = match Post::query_feed(offset).await {
-        Ok(feed) => feed,
+        Ok(feed) => feed.values(),
         Err(e) => {
             return ApiResult::error(
                 url,
@@ -65,44 +99,19 @@ async fn feed(offset: usize) -> ApiResult<Vec<ApiResult<PublicPost, ()>>, PostEr
         }
     };
 
-    let feed = feed.values();
-
-    let mut output = Vec::with_capacity(feed.len());
-    let mut name_map = HashMap::with_capacity(feed.len());
-    let mut read_ids = Vec::with_capacity(feed.len());
-
-    for i in feed.iter() {
-        read_ids.push(i.author);
-    }
-    for v in match db::bulk_read::<User>(&read_ids).await {
-        Ok(x) => x,
-        Err(e) => {
-            return ApiResult::error(
-                url,
-                500,
-                PostError::UnknownError(format!("Something went wrong during db search: {}", e)),
-            )
-        }
-    } {
-        if let Some(v) = v {
-            name_map.insert(v.uuid, v);
-        }
-    }
-
-    for v in feed {
-        if let Some(author) = name_map.get(&v.author) {
-            output.push(ApiResult::data(
-                format!("/post/{}", v.uuid),
-                PublicPost::new_refed(v, author),
-            ))
-        }
-    }
+    let output = match extract_name_map(&feed)
+        .await
+        .map(|name_map| transform_to_output(feed, name_map))
+    {
+        Ok(a) => a,
+        Err(e) => return ApiResult::error(url, 500, PostError::UnknownError(e.to_string())),
+    };
 
     ApiResult::data(url, output)
 }
 
 #[derive(Serialize)]
-enum AuthorFeedError {
+enum FeedError {
     AuthorDoesNotExist(&'static str),
     DbAccessError(String),
 }
@@ -111,16 +120,17 @@ enum AuthorFeedError {
 async fn author_feed(
     author: Uuid,
     offset: usize,
-) -> ApiResult<Vec<ApiResult<PublicPost, ()>>, AuthorFeedError> {
+) -> ApiResult<Vec<ApiResult<PublicPost, ()>>, FeedError> {
     let url = format!("/post/{}/{}", author, offset);
 
+    // Could be faster failing if other way around
     let feed = match Post::query_author_feed(&author, offset).await {
         Ok(feed) => feed.values(),
         Err(e) => {
             return ApiResult::error(
                 url,
                 500,
-                AuthorFeedError::DbAccessError(format!("Failed to query for posts: {}", e)),
+                FeedError::DbAccessError(format!("Failed to query for posts: {}", e)),
             );
         }
     };
@@ -132,7 +142,7 @@ async fn author_feed(
             return ApiResult::error(
                 url,
                 404,
-                AuthorFeedError::AuthorDoesNotExist("Author does not exist"),
+                FeedError::AuthorDoesNotExist("Author does not exist"),
             )
         }
     };
@@ -145,6 +155,29 @@ async fn author_feed(
             PublicPost::new_refed(i, &author),
         ))
     }
+
+    ApiResult::data(url, output)
+}
+
+#[get("/search/<term>/<offset>")]
+async fn search(term: &str, offset: usize) -> ApiResult<Vec<ApiResult<PublicPost, ()>>, FeedError> {
+    let url = format!("/post/search/{}/{}", term, offset);
+
+    let feed = match Post::search(term, offset).await {
+        Ok(v) => v.values(),
+        Err(e) => {
+            return ApiResult::error(
+                url,
+                500,
+                FeedError::DbAccessError(format!("Failed to query for posts: {}", e)),
+            );
+        }
+    };
+
+    let output = match extract_name_map(&feed).await {
+        Ok(name_map) => transform_to_output(feed, name_map),
+        Err(e) => return ApiResult::error(url, 500, FeedError::DbAccessError(e.to_string())),
+    };
 
     ApiResult::data(url, output)
 }
@@ -167,5 +200,5 @@ async fn get(id: uuid::Uuid) -> ApiResult<PublicPost, PostError> {
     ApiResult::data(url, PublicPost::create(post).await)
 }
 pub fn mount(rocket: Rocket<Build>) -> Rocket<Build> {
-    rocket.mount("/post", routes![create, get, feed, author_feed])
+    rocket.mount("/post", routes![create, get, feed, author_feed, search])
 }
