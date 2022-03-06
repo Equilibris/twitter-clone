@@ -6,6 +6,7 @@ specifiers:
   '@typescript-eslint/eslint-plugin': ^5.10.1
   '@typescript-eslint/parser': ^5.10.1
   autoprefixer: ^10.4.2
+  carbon-icons-svelte: ^10.44.4
   eslint: ^7.32.0
   eslint-config-prettier: ^8.3.0
   eslint-plugin-svelte3: ^3.2.1
@@ -31,6 +32,7 @@ devDependencies:
   '@typescript-eslint/eslint-plugin': 5.12.1_78ba2542c270c83b2a80bb1c125195b6
   '@typescript-eslint/parser': 5.12.1_eslint@7.32.0+typescript@4.5.5
   autoprefixer: 10.4.2_postcss@8.4.7
+  carbon-icons-svelte: 10.44.4
   eslint: 7.32.0
   eslint-config-prettier: 8.4.0_eslint@7.32.0
   eslint-plugin-svelte3: 3.4.0_eslint@7.32.0+svelte@3.46.4
@@ -509,6 +511,10 @@ packages:
 
   /caniuse-lite/1.0.30001313:
     resolution: {integrity: sha512-rI1UN0koZUiKINjysQDuRi2VeSCce3bYJNmDcj3PIKREiAmjakugBul1QSkg/fPrlULYl6oWfGg3PbgOSY9X4Q==}
+    dev: true
+
+  /carbon-icons-svelte/10.44.4:
+    resolution: {integrity: sha512-KsqXj0tYFF4S9b4mDSyt3Ovo0TA6QQ6nW0XRoY7D7EahM6hGluz0CdMw3wp/lbAUItTlTfYk+aPpiCKvpbTIyA==}
     dev: true
 
   /chalk/2.4.2:

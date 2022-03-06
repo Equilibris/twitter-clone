@@ -6,6 +6,7 @@
 	import type { PublicPost } from '$lib/typings/api';
 	import { paths } from '$lib/utils/fetch';
 	import Post from '$lib/components/post.svelte';
+	import Cataas from '$lib/components/cataas.svelte';
 
 	const query = $page.url.searchParams.get('query');
 
@@ -37,6 +38,10 @@
 			</svelte:fragment>
 			{result.message}
 		</Post>
+	{:else}
+		<div style="margin-top:50vh;transform:translateY(-50%)" class="rounded overflow-hidden">
+			<Cataas gif say="Lol no results" width={2000} />
+		</div>
 	{/each}
 	{#if !done}
 		<CbOnBottom

@@ -24,13 +24,30 @@
 </script>
 
 <CenterContainer>
-	<form on:submit={handleSubmit} class="flex flex-col">
-		<label for="name">name</label>
-		<input type="text" name="name" bind:value={name} />
-		<label for="password">password </label>
-		<input type="password" name="password" bind:value={password} />
-
-		<button>Sign in</button>
+	<form on:submit={handleSubmit} class="flex flex-col gap-3">
+		<div class="flex flex-col bg-pink-50 p-2 rounded text-black">
+			<label for="name" class="font-bold">Name</label>
+			<input
+				required
+				placeholder="Username"
+				class="bg-transparent focus:outline-none"
+				type="text"
+				name="name"
+				bind:value={name}
+			/>
+		</div>
+		<div class="flex flex-col bg-pink-50 p-2 rounded text-black">
+			<label for="password" class="font-bold">Password</label>
+			<input
+				required
+				class="bg-transparent focus:outline-none"
+				placeholder="Psw1"
+				type="password"
+				name="password"
+				bind:value={password}
+			/>
+		</div>
+		<button class="p-2 bg-pink-400 rounded hover:text-pink-200 transition">Sign in</button>
 
 		{#if error}
 			<p class="error">

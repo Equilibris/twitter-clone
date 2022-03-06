@@ -1,11 +1,13 @@
 <script lang="ts">
 	import Post from '$lib/components/post.svelte';
 	import CbOnBottom from '$lib/components/cbOnBottom.svelte';
+	import CenterContainer from '$lib/components/centerContainer.svelte';
+
+	import SendIcon from 'carbon-icons-svelte/lib/SendFilled20';
 
 	import type { PublicPost } from '$lib/typings/api';
 	import { paths } from '$lib/utils/fetch';
 	import { me } from '$lib/data/me/store';
-	import CenterContainer from '$lib/components/centerContainer.svelte';
 
 	let feed: PublicPost[] = [];
 	let isFetching = false;
@@ -41,13 +43,26 @@
 
 <CenterContainer>
 	{#if $me}
-		<form on:submit={handlePost} class="gap-1 flex flex-col">
-			<textarea name="message" cols="30" rows="10" bind:value={message} />
-			<button>Post</button>
+		<form on:submit={handlePost} class="gap-1 flex flex-col bg-pink-50 text-black rounded p-2 m-1">
+			<textarea
+				placeholder="What's on your mind?"
+				class="bg-transparent focus:outline-none resize-none"
+				name="message"
+				cols="20"
+				rows="7"
+				bind:value={message}
+				on:keypress={(e) => {
+					if (e.shiftKey && e.keyCode === 13) handlePost(e);
+				}}
+			/>
+			<button class="ml-auto bg-pink-400 h-10 w-10 flex items-center justify-center rounded-full"
+				><SendIcon class="fill-white transition hover:fill-pink-200" /></button
+			>
 		</form>
 	{/if}
 
-	{#each feed as result}
+	{#each feed as result (result.uuid)}
+		<!-- Supprise cat could be fun -->
 		<Post authorHref={result.author.data.name}>
 			<svelte:fragment slot="author">
 				{result.author.data.name}

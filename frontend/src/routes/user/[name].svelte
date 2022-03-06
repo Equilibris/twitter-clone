@@ -43,7 +43,10 @@
 
 <CenterContainer>
 	{#if user}
-		<h1>@{user.name}</h1>
+		<div class="flex items-center gap-4">
+			<div class="w-20 h-20 rounded-full bg-pink-400"></div>
+			<h1 class="font-bold text-4xl">@{user.name}</h1>
+		</div>
 
 		{#each feed as result}
 			<Post>
