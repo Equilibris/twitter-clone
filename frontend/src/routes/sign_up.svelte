@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { paths } from '$lib/utils/fetch';
 	import { me } from '$lib/data/me/store';
+	import CenterContainer from '$lib/components/centerContainer.svelte';
 
 	let password = '';
 	let name = '';
@@ -26,8 +27,8 @@
 	};
 </script>
 
-<div class="container">
-	<form on:submit={handleSubmit}>
+<CenterContainer>
+	<form on:submit={handleSubmit} class="flex flex-col">
 		<label for="name">name</label>
 		<input type="text" name="name" bind:value={name} />
 		<label for="password">password </label>
@@ -41,17 +42,4 @@
 			</p>
 		{/if}
 	</form>
-</div>
-
-<style lang="scss">
-	form {
-		display: flex;
-		flex-direction: column;
-	}
-
-	.container {
-		display: flex;
-		justify-content: center;
-		align-items: center;
-	}
-</style>
+</CenterContainer>

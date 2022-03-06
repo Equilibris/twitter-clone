@@ -1,4 +1,5 @@
 <script lang="ts">
+	import '../app.css';
 	import Fetcher from '$lib/data/me/fetcher.svelte';
 	import { me } from '$lib/data/me/store';
 	import Anchor from '$lib/components/anchor.svelte';
@@ -16,7 +17,7 @@
 </script>
 
 <main>
-	<header>
+	<header class="flex justify-between items-center w-full flex-row">
 		<Anchor href="/">
 			<b>Shwitter</b>
 		</Anchor>
@@ -36,14 +37,3 @@
 	<Fetcher />
 	<slot />
 </main>
-
-<style lang="scss">
-	header {
-		display: flex;
-
-		width: 100%;
-
-		justify-content: space-evenly;
-		align-items: center;
-	}
-</style>

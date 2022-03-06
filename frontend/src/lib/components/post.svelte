@@ -4,9 +4,9 @@
 	export let authorHref = '';
 </script>
 
-<article>
-	<p class="content"><slot /></p>
-	<p class="header">
+<article class="m-1">
+	<p class="whitespace-pre-line"><slot /></p>
+	<p class="font-bold">
 		@{#if !authorHref}
 			<slot name="author" />
 		{:else}<Anchor href={`/user/${authorHref}`}>
@@ -14,18 +14,3 @@
 			</Anchor>{/if}
 	</p>
 </article>
-
-<style lang="scss">
-	.header {
-		font-weight: 900;
-	}
-	.content {
-		white-space: pre-line;
-		font-size: 1.5em;
-		margin: 0;
-	}
-
-	article {
-		margin: 1em;
-	}
-</style>

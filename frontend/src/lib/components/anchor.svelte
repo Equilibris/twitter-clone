@@ -14,15 +14,3 @@
 		goto(href);
 	}}><slot /></a
 >
-
-<style lang="scss">
-	a {
-		text-decoration: underline;
-		text-decoration-color: #0000;
-
-		transition: all 0.3s;
-		&:hover {
-			text-decoration-color: inherit;
-		}
-	}
-</style>

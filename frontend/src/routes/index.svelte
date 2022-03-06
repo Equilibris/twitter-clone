@@ -41,7 +41,7 @@
 
 <CenterContainer>
 	{#if $me}
-		<form on:submit={handlePost}>
+		<form on:submit={handlePost} class="gap-1 flex flex-col">
 			<textarea name="message" cols="30" rows="10" bind:value={message} />
 			<button>Post</button>
 		</form>
@@ -66,11 +66,3 @@
 		/>
 	{/if}
 </CenterContainer>
-
-<style lang="scss">
-	form {
-		gap: 1em;
-		display: flex;
-		flex-direction: column;
-	}
-</style>
