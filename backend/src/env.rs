@@ -11,6 +11,20 @@ pub(crate) mod client {
             }
         }
     }
+
+    #[cfg(debug_assertions)]
+    pub unsafe fn generate() -> Result<&'static redis::Client, redis::RedisError> {
+        let redis_conn_url = "redis://127.0.0.1:6379";
+
+        CLIENT_SINGLETON_OBJECT_REFERENCE = Some(redis::Client::open(redis_conn_url)?);
+
+        match CLIENT_SINGLETON_OBJECT_REFERENCE {
+            Some(ref x) => Ok(x),
+            None => panic!("Unreachable"),
+        }
+    }
+
+    #[cfg(not(debug_assertions))]
     pub unsafe fn generate() -> Result<&'static redis::Client, redis::RedisError> {
         let redis_url = std::env::var("REDIS_URL").expect("Missing env variable `REDIS_URL`");
         let redis_password =

@@ -33,3 +33,20 @@ frontend-release: frontend-push frontend
 
 release: frontend-release backend-release
 	@echo "🎉 App is up"
+
+# Devops
+
+db-prepare:
+	cd db; \
+	make build
+
+db: ./db/Dockerfile
+	cd db; \
+	docker build -t it1-twitter-db:latest --rm .
+
+db-volume:
+	-docker volume create it1-twitter-vol
+
+db-run: db db-volume
+	docker container rm -f it1-twitter-db 
+	docker run -v it1-twitter-vol:/data -it -p 6379:6379 --rm --name it1-twitter-db it1-twitter-db:latest 
