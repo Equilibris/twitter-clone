@@ -5,10 +5,12 @@ backend-bin: backend/**/*
 backend: backend/**/* ./backend/Dockerfile
 	cd backend; \
 	docker build -t it1-twitter-backend:latest --rm .
-backend-run: set_env.sh backend/**/*
-	sh set_env.sh; \
+backend-run: backend/**/*
 	cd backend; \
 	cargo run
+backend-load: backend/**/*
+	cd backend; \
+	cargo run --profile load
 
 backend-push: backend
 	cd backend; \
@@ -50,3 +52,6 @@ db-volume:
 db-run: db db-volume
 	docker container rm -f it1-twitter-db 
 	docker run -v it1-twitter-vol:/data -it -p 6379:6379 --rm --name it1-twitter-db it1-twitter-db:latest 
+
+
+

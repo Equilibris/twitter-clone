@@ -1,0 +1,27 @@
+{
+	"name": "k6",
+	"version": "0.0.1",
+	"description": "",
+	"scripts": {
+		"build": "webpack",
+		"run:api:smoke": "k6 run dist/api-smoke.js",
+		"run:api:spike": "k6 run dist/api-spike.js",
+		"run": "yarn run:api:smoke; yarn run:api:spike"
+	},
+	"author": "",
+	"license": "ISC",
+	"dependencies": {
+		"@babel/core": "^7.17.5",
+		"@babel/plugin-proposal-class-properties": "^7.16.7",
+		"@babel/plugin-proposal-object-rest-spread": "^7.17.3",
+		"@babel/preset-env": "^7.16.11",
+		"@babel/preset-typescript": "^7.16.7",
+		"@types/k6": "^0.36.0",
+		"@types/webpack": "^5.28.0",
+		"babel-loader": "^8.2.3",
+		"clean-webpack-plugin": "^4.0.0",
+		"typescript": "^4.6.2",
+		"webpack": "^5.70.0",
+		"webpack-cli": "^4.9.2"
+	}
+}
