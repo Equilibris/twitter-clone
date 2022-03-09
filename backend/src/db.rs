@@ -28,7 +28,7 @@ pub fn convert_uuid<T>(uuid: &Uuid) -> String {
 }
 
 pub async fn get_con() -> anyhow::Result<redis::aio::Connection> {
-    let client = crate::env::client::get()?;
+    let client = crate::env::client::get();
     let con = client.get_async_connection().await?;
     Ok(con)
 }

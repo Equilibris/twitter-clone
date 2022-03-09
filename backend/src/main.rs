@@ -23,11 +23,6 @@ extern crate rocket;
 
 #[rocket::main]
 async fn main() -> anyhow::Result<()> {
-    unsafe {
-        client::generate()?;
-        pepper::generate();
-        jwt_secret::generate();
-    }
     let figment = Figment::from(rocket::Config::default())
         .merge(("log_level", rocket::config::LogLevel::Critical));
 
