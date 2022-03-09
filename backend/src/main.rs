@@ -3,6 +3,7 @@
 
 use env::jwt_secret;
 use middleware::index_insurance;
+use rocket::figment::Figment;
 
 use crate::{
     env::{client, pepper},
@@ -27,8 +28,10 @@ async fn main() -> anyhow::Result<()> {
         pepper::generate();
         jwt_secret::generate();
     }
+    let figment = Figment::from(rocket::Config::default())
+        .merge(("log_level", rocket::config::LogLevel::Critical));
 
-    let r = rocket::build()
+    let r = rocket::custom(figment)
         .attach(index_insurance::IndexInsurance)
         .attach(cors::CORS);
     let r = routes::mount(r);
