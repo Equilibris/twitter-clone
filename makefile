@@ -53,5 +53,8 @@ db-run: db db-volume
 	docker container rm -f it1-twitter-db 
 	docker run -v it1-twitter-vol:/data -it -p 6379:6379 --rm --name it1-twitter-db it1-twitter-db:latest 
 
-
+load-%:
+	cd ./test/backend/; \
+	pnpm build; \
+	k6 run dist/api-$*.js
 

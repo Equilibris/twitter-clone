@@ -1,5 +1,6 @@
 import { Options } from 'k6/options'
 import { signUp } from './requests/auth'
+import { invoke } from './requests'
 
 export let options: Options = {
 	scenarios: {
@@ -12,7 +13,7 @@ export let options: Options = {
 			vus: 10,
 			duration: '20s',
 			executor: 'constant-vus',
-		}
+		},
 	},
 	thresholds: {
 		http_req_failed: ['rate<0.01'],
@@ -20,4 +21,4 @@ export let options: Options = {
 		errors: ['rate<0.1'],
 	},
 }
-export default signUp(() => 0.3 * Math.random())
+export default invoke(() => 0.3 * Math.random(), signUp)

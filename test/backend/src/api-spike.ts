@@ -1,4 +1,5 @@
 import { Options } from 'k6/options'
+import { invoke } from './requests'
 import { signUp } from './requests/auth'
 
 const count = 1000
@@ -19,4 +20,4 @@ export let options: Options = {
 		errors: ['rate<0.1'],
 	},
 }
-export default signUp(() => 0.5 + 2 * Math.random())
+export default invoke(() => 1 + 2 * Math.random(), signUp)
