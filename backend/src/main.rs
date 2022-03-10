@@ -1,14 +1,10 @@
 #![feature(decl_macro, proc_macro_hygiene)]
 #![feature(async_closure)]
 
-use env::jwt_secret;
 use middleware::index_insurance;
 use rocket::figment::Figment;
 
-use crate::{
-    env::{client, pepper},
-    middleware::cors,
-};
+use crate::middleware::cors;
 
 mod api;
 mod db;
@@ -23,11 +19,6 @@ extern crate rocket;
 
 #[rocket::main]
 async fn main() -> anyhow::Result<()> {
-    unsafe {
-        client::generate()?;
-        pepper::generate();
-        jwt_secret::generate();
-    }
     let figment = Figment::from(rocket::Config::default())
         .merge(("log_level", rocket::config::LogLevel::Critical));
 

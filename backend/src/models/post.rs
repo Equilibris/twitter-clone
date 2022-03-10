@@ -4,7 +4,7 @@ use uuid::Uuid;
 
 use super::user::{PublicUser, User};
 use crate::{
-    db::{self, ftquery::FtQuery},
+    db::{self, ftquery::FtQuery, ConType},
     make_model,
 };
 
@@ -88,10 +88,7 @@ impl Post {
     }
 
     // TODO: This should have a start date specified
-    pub async fn query_feed_con(
-        offset: usize,
-        con: &mut redis::aio::Connection,
-    ) -> anyhow::Result<FtQuery<Self>> {
+    pub async fn query_feed_con(offset: usize, con: &mut ConType) -> anyhow::Result<FtQuery<Self>> {
         // Maybe do some maths to read backwards? Will this be more expensive maybe?
         Ok(redis::cmd("FT.SEARCH")
             .arg(POST_INDEX_NAME)
@@ -106,7 +103,7 @@ impl Post {
             .await?)
     }
     pub async fn query_feed(offset: usize) -> anyhow::Result<FtQuery<Self>> {
-        let mut con = db::get_con().await?;
+        let mut con = db::get_con();
 
         Ok(Self::query_feed_con(offset, &mut con).await?)
     }
@@ -114,7 +111,7 @@ impl Post {
     pub async fn query_author_feed_con(
         author: &Uuid,
         offset: usize,
-        con: &mut redis::aio::Connection,
+        con: &mut ConType,
     ) -> anyhow::Result<FtQuery<Self>> {
         let q = format!(
             "@author:{{{}}}",
@@ -134,7 +131,7 @@ impl Post {
             .await?)
     }
     pub async fn query_author_feed(author: &Uuid, offset: usize) -> anyhow::Result<FtQuery<Self>> {
-        let mut con = db::get_con().await?;
+        let mut con = db::get_con();
 
         Ok(Self::query_author_feed_con(author, offset, &mut con).await?)
     }
@@ -143,7 +140,7 @@ impl Post {
     pub async fn search_con(
         term: &str,
         offset: usize,
-        con: &mut redis::aio::Connection,
+        con: &mut ConType,
     ) -> anyhow::Result<FtQuery<Self>> {
         let q = db::sanitizer::sanitizer(term);
 
@@ -159,12 +156,12 @@ impl Post {
             .await?)
     }
     pub async fn search(term: &str, offset: usize) -> anyhow::Result<FtQuery<Self>> {
-        let mut con = db::get_con().await?;
+        let mut con = db::get_con();
 
         Ok(Self::search_con(term, offset, &mut con).await?)
     }
 
-    pub async fn create_index_con(con: &mut redis::aio::Connection) -> anyhow::Result<()> {
+    pub async fn create_index_con(con: &mut ConType) -> anyhow::Result<()> {
         let _: () = redis::cmd("FT.CREATE")
             .arg(POST_INDEX_NAME)
             .arg("on")
@@ -199,11 +196,11 @@ impl Post {
     }
 
     pub async fn ensure_index() -> anyhow::Result<()> {
-        let mut con = db::get_con().await?;
+        let mut con = db::get_con();
 
         if let Err(_) = redis::cmd("FT.INFO")
             .arg(POST_INDEX_NAME)
-            .query_async::<redis::aio::Connection, ()>(&mut con)
+            .query_async::<ConType, ()>(&mut con)
             .await
         {
             println!("Index does not exist for posts, creating");
