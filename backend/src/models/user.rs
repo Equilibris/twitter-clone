@@ -3,7 +3,7 @@ use uuid::Uuid;
 
 use super::password::Password;
 use crate::{
-    db::{self, ftquery::FtQuery},
+    db::{self, ftquery::FtQuery, ConType},
     make_model,
 };
 
@@ -64,7 +64,7 @@ impl User {
     // FIXME: This is more unstable than my mental state
     pub async fn query_username_con(
         name: &str,
-        con: &mut redis::aio::Connection,
+        con: &mut crate::db::ConType,
     ) -> anyhow::Result<Option<Self>> {
         let name = db::sanitizer::sanitizer(name);
         let q = format!("@username:{{{}}}", name);
@@ -79,12 +79,12 @@ impl User {
         Ok(result)
     }
     pub async fn query_username(name: &str) -> anyhow::Result<Option<Self>> {
-        let mut con = db::get_con().await?;
+        let mut con = db::get_con();
 
         Self::query_username_con(name, &mut con).await
     }
 
-    pub async fn create_index_con(con: &mut redis::aio::Connection) -> anyhow::Result<()> {
+    pub async fn create_index_con(con: &mut ConType) -> anyhow::Result<()> {
         let _: () = redis::cmd("FT.CREATE")
             .arg(USER_INDEX_NAME)
             .arg("on")
@@ -115,11 +115,11 @@ impl User {
     }
 
     pub async fn ensure_index() -> anyhow::Result<()> {
-        let mut con = db::get_con().await?;
+        let mut con = db::get_con();
 
         if let Err(_) = redis::cmd("FT.INFO")
             .arg(USER_INDEX_NAME)
-            .query_async::<redis::aio::Connection, ()>(&mut con)
+            .query_async::<crate::db::ConType, ()>(&mut con)
             .await
         {
             println!("Index does not exist for user, creating");

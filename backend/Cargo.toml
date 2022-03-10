@@ -23,6 +23,7 @@ tokio = { version = "1", features = ["full"] }
 chrono = { version = "0.4", features = ["serde"] }
 jsonwebtoken = "8"
 lazy_static = "1"
+futures = { version = "0.3", features = ["executor"] }
 
 # rocket_okapi = { version = "0.8.0-alpha-1", features = ["swagger", "rapidoc"] }
 # schemars = "^0.7"

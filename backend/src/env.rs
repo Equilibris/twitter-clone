@@ -1,5 +1,6 @@
 pub(crate) mod client {
     extern crate redis;
+
     lazy_static::lazy_static! {
         static ref CLIENT_SINGLETON_OBJECT_REFERENCE: redis::Client = {
             let redis_conn_url = if cfg!(debug_assertions) { "redis://127.0.0.1:6379".to_string() } else {
@@ -11,10 +12,20 @@ pub(crate) mod client {
             };
             redis::Client::open(redis_conn_url).unwrap()
         };
+
+        static ref MULTIPLEXED_CON: redis::aio::MultiplexedConnection = {
+            lazy_static::initialize(&CLIENT_SINGLETON_OBJECT_REFERENCE);
+
+            let result = futures::executor::block_on(async {
+                CLIENT_SINGLETON_OBJECT_REFERENCE.get_multiplexed_async_connection().await
+            });
+
+            result.unwrap()
+        };
     }
 
-    pub fn get() -> &'static redis::Client {
-        &CLIENT_SINGLETON_OBJECT_REFERENCE
+    pub fn get_multiplexed_con() -> &'static redis::aio::MultiplexedConnection {
+        &MULTIPLEXED_CON
     }
 }
 

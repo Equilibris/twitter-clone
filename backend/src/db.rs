@@ -8,6 +8,8 @@ use serde::Serialize;
 use serde_json::to_string;
 use uuid::Uuid;
 
+pub type ConType = redis::aio::MultiplexedConnection;
+
 pub trait Idable {
     fn get_id(&self) -> Uuid;
 }
@@ -27,15 +29,17 @@ pub fn convert_uuid<T>(uuid: &Uuid) -> String {
     format!("{}{}", prefix, format_val)
 }
 
-pub async fn get_con() -> anyhow::Result<redis::aio::Connection> {
-    let client = crate::env::client::get();
-    let con = client.get_async_connection().await?;
-    Ok(con)
+pub fn get_con() -> ConType {
+    // let client = crate::env::client::get();
+    // let con = client.get_async_connection().await?;
+    let con = crate::env::client::get_multiplexed_con();
+
+    con.clone()
 }
 
 pub async fn write_con<Doc: Serialize + Idable>(
     doc: &Doc,
-    con: &mut redis::aio::Connection,
+    con: &mut ConType
 ) -> anyhow::Result<()> {
     let string = to_string(doc)?;
 
@@ -55,13 +59,13 @@ pub async fn write_con<Doc: Serialize + Idable>(
     }
 }
 pub async fn write<Doc: Serialize + Idable>(doc: &Doc) -> anyhow::Result<()> {
-    let mut con = get_con().await?;
+    let mut con = get_con();
     write_con(doc, &mut con).await
 }
 
 pub async fn exec_read_con<T: FromRedisValue>(
     cmd: &redis::Cmd,
-    con: &mut redis::aio::Connection,
+    con: &mut ConType,
 ) -> anyhow::Result<Option<T>> {
     Ok(match cmd.query_async(con).await {
         Ok(v) => Some(v),
@@ -81,7 +85,7 @@ pub async fn exec_read_con<T: FromRedisValue>(
 }
 pub async fn read_con<Doc: FromRedisValue>(
     id: &Uuid,
-    con: &mut redis::aio::Connection,
+    con: &mut ConType,
 ) -> anyhow::Result<Option<Doc>> {
     let id = convert_uuid::<Doc>(id);
     let result = exec_read_con(redis::cmd("JSON.GET").arg(id), con).await?;
@@ -89,14 +93,14 @@ pub async fn read_con<Doc: FromRedisValue>(
     Ok(result)
 }
 pub async fn read<Doc: redis::FromRedisValue>(id: &Uuid) -> anyhow::Result<Option<Doc>> {
-    let mut con = get_con().await?;
+    let mut con = get_con();
 
     read_con(id, &mut con).await
 }
 
 pub async fn bulk_read_con<Doc: DeserializeOwned + std::fmt::Debug>(
     ids: &Vec<Uuid>,
-    con: &mut redis::aio::Connection,
+    con: &mut ConType,
 ) -> anyhow::Result<Vec<Option<Doc>>> {
     if ids.len() == 0 {
         return Ok(vec![]);
@@ -125,7 +129,7 @@ pub async fn bulk_read_con<Doc: DeserializeOwned + std::fmt::Debug>(
 pub async fn bulk_read<Doc: DeserializeOwned + std::fmt::Debug>(
     id: &Vec<Uuid>,
 ) -> anyhow::Result<Vec<Option<Doc>>> {
-    let mut con = get_con().await?;
+    let mut con = get_con();
 
     Ok(bulk_read_con(id, &mut con).await?)
 }
