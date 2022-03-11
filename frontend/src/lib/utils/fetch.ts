@@ -10,6 +10,7 @@ import type {
 	PublicUser,
 	SignInAndUpData,
 	SignUpError,
+	CreateCommentData,
 } from '../typings/api';
 import { SERVER_URL } from '$lib/constants/server_url';
 
@@ -95,12 +96,18 @@ const curryPost =
 	(data: R) =>
 		post<Entry<R, T, E>>(url, data);
 
+// prettier-ignore
 export const paths = {
 	post: {
 		create: curryPost<CreatePostData, PublicPost, PostError>('/post/create'),
 		feed: curryGet<ApiResult<PublicPost, null>[], PostError, [number]>('/post/feed/'),
 		authorFeed: curryGet<ApiResult<PublicPost, null>[], FeedError, [string, number]>('/post/'),
 		search: curryGet<ApiResult<PublicPost, null>[], FeedError, [string, number]>('/post/search/'),
+
+		post: curryGet<PublicPost, PostError, [string]>('/post/'),
+
+		createComment: curryPost<CreateCommentData, PublicPost, PostError>('/post/comment'),
+		comments: curryGet<ApiResult<PublicPost, null>[], FeedError, [string, number]>('/post/comments/'),
 
 		toggleLike: curryGet<PublicPost, unknown, [string]>('/post/tlike/'),
 	},

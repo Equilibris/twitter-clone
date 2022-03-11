@@ -53,6 +53,11 @@ export interface CreatePostData {
 	message: string;
 }
 
+export interface CreateCommentData {
+	message: string;
+	post: string;
+}
+
 export interface SignInAndUpData {
 	name: string;
 	password: string;

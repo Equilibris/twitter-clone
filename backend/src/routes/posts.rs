@@ -35,7 +35,6 @@ async fn create(data: Json<CreatePostData>, tau: TAU) -> ApiResult<PublicPost, P
     }
 
     let user = tau.user;
-
     let post = Post::new(data.message.to_owned(), &user);
 
     match db::write(&post).await {
@@ -53,6 +52,37 @@ async fn create(data: Json<CreatePostData>, tau: TAU) -> ApiResult<PublicPost, P
     }
 }
 
+#[derive(Deserialize)]
+struct CommentData {
+    message: String,
+    post: Uuid,
+}
+
+#[post("/comment", data = "<data>")]
+async fn create_comment(data: Json<CommentData>, tau: TAU) -> ApiResult<PublicPost, PostError> {
+    let url = "/posts/create".to_string();
+
+    if data.message.len() > 150 {
+        return ApiResult::error(url, 400, PostError::BadPost);
+    }
+
+    let user = tau.user;
+    let post = Post::new_comment(data.message.to_owned(), &user, data.post);
+
+    match db::write(&post).await {
+        Err(e) => ApiResult::error_with_refresh_token(
+            url,
+            500,
+            PostError::UnknownError(format!("An unexpected error occurred: {}", e)),
+            tau.token,
+        ),
+        _ => ApiResult::data_with_refresh_token(
+            url,
+            PublicPost::new(post, user, &PPT::new(tau.token.clone())),
+            tau.token,
+        ),
+    }
+}
 async fn extract_name_map(values: &Vec<Post>) -> anyhow::Result<HashMap<Uuid, User>> {
     let mut name_map = HashMap::with_capacity(values.len());
     let mut read_ids = Vec::with_capacity(values.len());
@@ -120,6 +150,7 @@ async fn feed(offset: usize, ppt: PPT) -> ApiResult<Vec<ApiResult<PublicPost, ()
 
 #[derive(Serialize)]
 enum FeedError {
+    PostDoesNotExist(&'static str),
     AuthorDoesNotExist(&'static str),
     DbAccessError(String),
 }
@@ -198,6 +229,44 @@ async fn search(
     ApiResult::data(url, output)
 }
 
+#[get("/comments/<id>/<offset>")]
+async fn comments(
+    id: Uuid,
+    offset: usize,
+    ppt: PPT,
+) -> ApiResult<Vec<ApiResult<PublicPost, ()>>, FeedError> {
+    let url = format!("/post/feed/{}", offset);
+
+    let feed = match Post::query_comments(&id, offset).await {
+        Ok(feed) => feed.values(),
+        Err(e) => {
+            return ApiResult::error_with_ppt(
+                url,
+                500,
+                FeedError::DbAccessError(format!("An unexpected error occurred: {}", e)),
+                ppt,
+            )
+        }
+    };
+
+    let output = match extract_name_map(&feed)
+        .await
+        .map(|name_map| transform_to_output(feed, name_map, &ppt))
+    {
+        Ok(a) => a,
+        Err(e) => {
+            return ApiResult::error_with_ppt(
+                url,
+                500,
+                FeedError::DbAccessError(e.to_string()),
+                ppt,
+            )
+        }
+    };
+
+    ApiResult::data_with_ppt(url, output, ppt)
+}
+
 // TODO: Since this is a get request it can allow
 //       click hijacking from cross origin
 //       image requests, this is not ideal
@@ -251,6 +320,7 @@ async fn get(id: uuid::Uuid, ppt: PPT) -> ApiResult<PublicPost, PostError> {
         ),
     }
 }
+
 pub fn mount(rocket: Rocket<Build>) -> Rocket<Build> {
     rocket.mount(
         "/post",
@@ -261,7 +331,9 @@ pub fn mount(rocket: Rocket<Build>) -> Rocket<Build> {
             author_feed,
             search,
             toggle_like,
-            toggle_like_fallback
+            toggle_like_fallback,
+            create_comment,
+            comments
         ],
     )
 }
