@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use crate::{
-    api::result::ApiResult,
+    api::{result::ApiResult, token::Token},
     db,
     guards::{ppt::PPT, tau::TAU},
     models::{
@@ -198,11 +198,14 @@ async fn search(
     ApiResult::data(url, output)
 }
 
-#[get("/<id>")]
-async fn get(id: uuid::Uuid, ppt: PPT) -> ApiResult<PublicPost, PostError> {
-    let url = format!("/post/{}", id);
+// TODO: Since this is a get request it can allow
+//       click hijacking from cross origin
+//       image requests, this is not ideal
+#[get("/tlike/<id>", rank = 1)]
+async fn toggle_like(id: Uuid, token: Token) -> ApiResult<PublicPost, PostError> {
+    let url = format!("/post/tlike/{}", id);
 
-    let post: Post = match db::read(&id).await {
+    let mut post: Post = match db::read(&id).await {
         Ok(Some(v)) => v,
         _ => {
             return ApiResult::error(
@@ -213,8 +216,52 @@ async fn get(id: uuid::Uuid, ppt: PPT) -> ApiResult<PublicPost, PostError> {
         }
     };
 
-    ApiResult::data_with_ppt(url, PublicPost::create(post, &ppt).await, ppt)
+    if post.likes.contains(&token.sub) {
+        post.likes.remove(&token.sub);
+        post.likes_count = post.likes.len();
+    } else {
+        post.likes.insert(token.sub);
+        post.likes_count = post.likes.len();
+    }
+
+    match db::write(&post).await {
+        Ok(_) => ApiResult::data_with_refresh_token(
+            url,
+            PublicPost::create(post, &PPT::new(token.clone())).await,
+            token,
+        ),
+        Err(e) => ApiResult::error(url, 500, PostError::UnknownError(format!("{}", e))),
+    }
+}
+
+#[get("/tlike/<id>", rank = 2)]
+async fn toggle_like_fallback(id: Uuid) -> ApiResult<(), &'static str> {
+    ApiResult::error(format!("/post/tlike/{}", id), 401, "Unauthenticated")
+}
+#[get("/<id>")]
+async fn get(id: uuid::Uuid, ppt: PPT) -> ApiResult<PublicPost, PostError> {
+    let url = format!("/post/{}", id);
+
+    match db::read(&id).await {
+        Ok(Some(v)) => ApiResult::data_with_ppt(url, PublicPost::create(v, &ppt).await, ppt),
+        _ => ApiResult::error(
+            url,
+            404,
+            PostError::PostDoesNotExist(format!("Post with id {} does not exist", id)),
+        ),
+    }
 }
 pub fn mount(rocket: Rocket<Build>) -> Rocket<Build> {
-    rocket.mount("/post", routes![create, get, feed, author_feed, search])
+    rocket.mount(
+        "/post",
+        routes![
+            create,
+            get,
+            feed,
+            author_feed,
+            search,
+            toggle_like,
+            toggle_like_fallback
+        ],
+    )
 }

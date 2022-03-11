@@ -15,7 +15,7 @@
 <script lang="ts">
 	import CenterContainer from '$lib/components/centerContainer.svelte';
 	import CbOnBottom from '$lib/components/cbOnBottom.svelte';
-	import Post from '$lib/components/post.svelte';
+	import Posts from '$lib/components/posts.svelte';
 
 	export let data: ApiResult<PublicUser, GetUserError>;
 
@@ -44,18 +44,11 @@
 <CenterContainer>
 	{#if user}
 		<div class="flex items-center gap-4">
-			<div class="w-20 h-20 rounded-full bg-pink-400"></div>
+			<div class="w-20 h-20 rounded-full bg-pink-400" />
 			<h1 class="font-bold text-4xl">@{user.name}</h1>
 		</div>
 
-		{#each feed as result}
-			<Post>
-				<svelte:fragment slot="author">
-					{result.author.data.name}
-				</svelte:fragment>
-				{result.message}
-			</Post>
-		{/each}
+		<Posts bind:feed>User has not posted yet</Posts>
 		{#if !done}
 			<CbOnBottom
 				on:intersect={async (v) => {

@@ -4,6 +4,11 @@
 	import FilledHeartIcon from 'carbon-icons-svelte/lib/FavoriteFilled20';
 
 	import type { PublicPost } from '$lib/typings/api';
+	import { createEventDispatcher } from 'svelte';
+
+	import { me } from '$lib/data/me/store';
+
+	const dispatch = createEventDispatcher<{ like: void }>();
 
 	export let pubPost: PublicPost;
 
@@ -26,8 +31,11 @@
 		</p>
 	</div>
 	<div class="flex gap-2 align-center mt-2">
-		<div class="w-10 h-10 flex justify-center items-center flex-col">
-			{#if iLike}<FilledHeartIcon />{:else}<HeartIcon />{/if}{likes}
+		<div
+			on:click={() => dispatch('like')}
+			class="w-10 h-10 flex justify-center items-center flex-col select-none"
+		>
+			{#if iLike && $me !== null}<FilledHeartIcon />{:else}<HeartIcon />{/if}{likes}
 		</div>
 		<p class="whitespace-pre-line"><slot /></p>
 	</div>

@@ -39,7 +39,7 @@ pub fn get_con() -> ConType {
 
 pub async fn write_con<Doc: Serialize + Idable>(
     doc: &Doc,
-    con: &mut ConType
+    con: &mut ConType,
 ) -> anyhow::Result<()> {
     let string = to_string(doc)?;
 

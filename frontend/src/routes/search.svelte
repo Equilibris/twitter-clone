@@ -32,7 +32,7 @@
 </script>
 
 <CenterContainer>
-	<Posts {feed}>
+	<Posts bind:feed>
 		<div style="margin-top:50vh;transform:translateY(-50%)" class="rounded overflow-hidden">
 			<Cataas gif say="Lol no results" width={2000} />
 		</div>

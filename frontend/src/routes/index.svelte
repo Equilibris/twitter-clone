@@ -62,7 +62,7 @@
 		</form>
 	{/if}
 
-	<Posts {feed} />
+	<Posts bind:feed />
 	{#if !done}
 		<CbOnBottom
 			on:intersect={async (v) => {
