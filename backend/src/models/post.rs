@@ -36,6 +36,7 @@ pub struct PublicPost {
     pub likes_count: usize,
     pub i_like: bool,
     // pub comments: !,
+    #[serde(with = "ts_seconds")]
     pub created_at: DateTime<Utc>,
 }
 
@@ -170,8 +171,6 @@ impl Post {
         con: &mut ConType,
     ) -> anyhow::Result<FtQuery<Self>> {
         let q = db::sanitizer::sanitizer(term);
-
-        println!("{}", q);
 
         Ok(redis::cmd("FT.SEARCH")
             .arg(POST_INDEX_NAME)

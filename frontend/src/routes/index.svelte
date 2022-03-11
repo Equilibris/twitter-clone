@@ -8,6 +8,7 @@
 	import type { PublicPost } from '$lib/typings/api';
 	import { paths } from '$lib/utils/fetch';
 	import { me } from '$lib/data/me/store';
+	import Posts from '$lib/components/posts.svelte';
 
 	let feed: PublicPost[] = [];
 	let isFetching = false;
@@ -61,15 +62,7 @@
 		</form>
 	{/if}
 
-	{#each feed as result (result.uuid)}
-		<!-- Supprise cat could be fun -->
-		<Post authorHref={result.author.data.name}>
-			<svelte:fragment slot="author">
-				{result.author.data.name}
-			</svelte:fragment>
-			{result.message}
-		</Post>
-	{/each}
+	<Posts {feed} />
 	{#if !done}
 		<CbOnBottom
 			on:intersect={async (v) => {
