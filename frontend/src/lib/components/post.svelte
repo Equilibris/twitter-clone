@@ -1,8 +1,20 @@
 <script lang="ts">
 	import Anchor from '$lib/components/anchor.svelte';
 	import HeartIcon from 'carbon-icons-svelte/lib/Favorite20';
+	import FilledHeartIcon from 'carbon-icons-svelte/lib/FavoriteFilled20';
 
-	export let authorHref = '';
+	import type { PublicPost } from '$lib/typings/api';
+	import { createEventDispatcher } from 'svelte';
+
+	import { me } from '$lib/data/me/store';
+
+	const dispatch = createEventDispatcher<{ like: void }>();
+
+	export let pubPost: PublicPost;
+
+	$: authorHref = pubPost.author.data.name;
+	$: likes = pubPost.likes_count;
+	$: iLike = pubPost.i_like;
 </script>
 
 <article class="m-1 my-4 dark:bg-slate-700 bg-slate-50 p-2 rounded">
@@ -19,7 +31,12 @@
 		</p>
 	</div>
 	<div class="flex gap-2 align-center mt-2">
-		<div class="w-10 h-10 flex justify-center items-center flex-col"><HeartIcon />0</div>
+		<div
+			on:click={() => dispatch('like')}
+			class="w-10 h-10 flex justify-center items-center flex-col select-none"
+		>
+			{#if iLike && $me !== null}<FilledHeartIcon />{:else}<HeartIcon />{/if}{likes}
+		</div>
 		<p class="whitespace-pre-line"><slot /></p>
 	</div>
 </article>

@@ -41,6 +41,9 @@ export interface PublicPost {
 	author: ApiResult<PublicUser, GetUserError>;
 	message: string;
 
+	likes_count: number;
+	i_like: boolean;
+
 	created_at: number;
 }
 

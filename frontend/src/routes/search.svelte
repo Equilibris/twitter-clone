@@ -7,6 +7,7 @@
 	import { paths } from '$lib/utils/fetch';
 	import Post from '$lib/components/post.svelte';
 	import Cataas from '$lib/components/cataas.svelte';
+	import Posts from '$lib/components/posts.svelte';
 
 	const query = $page.url.searchParams.get('query');
 
@@ -31,18 +32,11 @@
 </script>
 
 <CenterContainer>
-	{#each feed as result}
-		<Post authorHref={result.author.data.name}>
-			<svelte:fragment slot="author">
-				{result.author.data.name}
-			</svelte:fragment>
-			{result.message}
-		</Post>
-	{:else}
+	<Posts bind:feed>
 		<div style="margin-top:50vh;transform:translateY(-50%)" class="rounded overflow-hidden">
 			<Cataas gif say="Lol no results" width={2000} />
 		</div>
-	{/each}
+	</Posts>
 	{#if !done}
 		<CbOnBottom
 			on:intersect={async (v) => {

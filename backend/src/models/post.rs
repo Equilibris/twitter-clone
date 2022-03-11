@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 use chrono::{serde::ts_seconds, DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
@@ -5,6 +7,7 @@ use uuid::Uuid;
 use super::user::{PublicUser, User};
 use crate::{
     db::{self, ftquery::FtQuery, ConType},
+    guards::ppt::PPT,
     make_model,
 };
 
@@ -15,7 +18,9 @@ pub struct Post {
     pub author: Uuid,
     pub message: String,
 
-    pub comments: Vec<Uuid>,
+    pub comment: Option<Uuid>,
+    pub likes: HashSet<Uuid>,
+    pub likes_count: usize,
 
     #[serde(with = "ts_seconds")]
     pub created_at: DateTime<Utc>,
@@ -28,22 +33,31 @@ pub struct PublicPost {
     pub author: crate::routes::user::GetUserResult,
     pub message: String,
 
+    pub likes_count: usize,
+    pub i_like: bool,
     // pub comments: !,
+    #[serde(with = "ts_seconds")]
     pub created_at: DateTime<Utc>,
 }
 
 impl PublicPost {
-    pub async fn create(post: Post) -> Self {
+    pub async fn create(post: Post, ppt: &PPT) -> Self {
         Self {
             uuid: post.uuid,
 
             author: crate::routes::user::get_user(post.author).await,
             message: post.message,
 
+            likes_count: post.likes_count,
+            i_like: match &ppt.0 {
+                Some(t) => post.likes.contains(&t.sub),
+                None => false,
+            },
+
             created_at: post.created_at,
         }
     }
-    pub fn new_refed(post: Post, user: &User) -> Self {
+    pub fn new_refed(post: Post, user: &User, ppt: &PPT) -> Self {
         Self {
             uuid: post.uuid,
 
@@ -53,10 +67,16 @@ impl PublicPost {
             ),
             message: post.message,
 
+            likes_count: post.likes_count,
+            i_like: match &ppt.0 {
+                Some(t) => post.likes.contains(&t.sub),
+                None => false,
+            },
+
             created_at: post.created_at,
         }
     }
-    pub fn new(post: Post, user: User) -> Self {
+    pub fn new(post: Post, user: User, ppt: &PPT) -> Self {
         Self {
             uuid: post.uuid,
 
@@ -65,6 +85,12 @@ impl PublicPost {
                 PublicUser::new(user),
             ),
             message: post.message,
+
+            likes_count: post.likes_count,
+            i_like: match &ppt.0 {
+                Some(t) => post.likes.contains(&t.sub),
+                None => false,
+            },
 
             created_at: post.created_at,
         }
@@ -81,7 +107,9 @@ impl Post {
             author: author.get_id(),
             message,
 
-            comments: vec![],
+            comment: None,
+            likes: HashSet::new(),
+            likes_count: 0,
 
             created_at: Utc::now(),
         }
@@ -144,8 +172,6 @@ impl Post {
     ) -> anyhow::Result<FtQuery<Self>> {
         let q = db::sanitizer::sanitizer(term);
 
-        println!("{}", q);
-
         Ok(redis::cmd("FT.SEARCH")
             .arg(POST_INDEX_NAME)
             .arg(q)
@@ -181,6 +207,19 @@ impl Post {
             .arg("AS")
             .arg("search")
             .arg("TEXT")
+            // Comment
+            .arg("$.comments_on")
+            .arg("AS")
+            .arg("comments")
+            .arg("TAG")
+            .arg("SEPARATOR")
+            .arg("@")
+            // Likes
+            .arg("$.likes_count")
+            .arg("AS")
+            .arg("likes")
+            .arg("NUMERIC")
+            .arg("SORTABLE")
             // Author search
             .arg("$.author")
             .arg("AS")

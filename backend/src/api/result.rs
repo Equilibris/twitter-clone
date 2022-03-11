@@ -1,6 +1,8 @@
 use rocket::{http, response};
 use serde::Serialize;
 
+use crate::guards::ppt::PPT;
+
 use super::token::Token;
 
 #[derive(Debug, Serialize)]
@@ -45,6 +47,12 @@ impl<T: Serialize, E: Serialize> ApiResult<T, E> {
             refresh_token: Self::token_to_refresh_token(token),
         }
     }
+    pub fn data_with_ppt(me: String, data: T, ppt: PPT) -> Self {
+        match ppt.0 {
+            Some(token) => Self::data_with_refresh_token(me, data, token),
+            None => Self::data(me, data),
+        }
+    }
 
     pub fn error(me: String, status: u16, error: E) -> Self {
         Self {
@@ -60,6 +68,12 @@ impl<T: Serialize, E: Serialize> ApiResult<T, E> {
             data: None,
             error: Some((status, error)),
             refresh_token: Self::token_to_refresh_token(token),
+        }
+    }
+    pub fn error_with_ppt(me: String, status: u16, error: E, ppt: PPT) -> Self {
+        match ppt.0 {
+            Some(token) => Self::error_with_refresh_token(me, status, error, token),
+            None => Self::error(me, status, error),
         }
     }
 

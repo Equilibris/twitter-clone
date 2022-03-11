@@ -101,6 +101,8 @@ export const paths = {
 		feed: curryGet<ApiResult<PublicPost, null>[], PostError, [number]>('/post/feed/'),
 		authorFeed: curryGet<ApiResult<PublicPost, null>[], FeedError, [string, number]>('/post/'),
 		search: curryGet<ApiResult<PublicPost, null>[], FeedError, [string, number]>('/post/search/'),
+
+		toggleLike: curryGet<PublicPost, unknown, [string]>('/post/tlike/'),
 	},
 	user: {
 		signUp: curryPost<SignInAndUpData, Me, SignUpError>('/user/sign_up'),
