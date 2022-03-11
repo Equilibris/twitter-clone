@@ -11,6 +11,53 @@ use crate::{
     make_model,
 };
 
+mod comment_serde {
+    pub static NO_VAL: &str = "0";
+
+    pub fn serialize<S>(v: &Option<Uuid>, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: ser::Serializer,
+    {
+        match v {
+            Some(v) => {
+                let v = format!("{}", v);
+
+                serializer.serialize_str(v.as_str())
+            }
+            None => serializer.serialize_str(NO_VAL),
+        }
+    }
+
+    pub fn deserialize<'de, D>(d: D) -> Result<Option<Uuid>, D::Error>
+    where
+        D: de::Deserializer<'de>,
+    {
+        Ok(d.deserialize_str(OptionUuidVisitor)?)
+    }
+    struct OptionUuidVisitor;
+    impl<'de> de::Visitor<'de> for OptionUuidVisitor {
+        type Value = Option<Uuid>;
+
+        fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+            formatter.write_str("a uuid or NO_VAL")
+        }
+        fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
+        where
+            E: de::Error,
+        {
+            match uuid::Uuid::parse_str(v) {
+                Ok(v) => Ok(Self::Value::Some(v)),
+                Err(_) => Ok(Self::Value::None),
+            }
+        }
+    }
+
+    use std::fmt;
+
+    use serde::{de, ser};
+    use uuid::Uuid;
+}
+
 #[derive(Debug, Deserialize, Serialize)]
 pub struct Post {
     pub uuid: Uuid,
@@ -18,6 +65,7 @@ pub struct Post {
     pub author: Uuid,
     pub message: String,
 
+    #[serde(with = "self::comment_serde")]
     pub comment: Option<Uuid>,
     pub likes: HashSet<Uuid>,
     pub likes_count: usize,
@@ -115,12 +163,27 @@ impl Post {
         }
     }
 
+    pub fn new_comment<T: crate::db::Idable>(message: String, author: &T, comment: Uuid) -> Self {
+        Self {
+            uuid: Uuid::new_v4(),
+
+            author: author.get_id(),
+            message,
+
+            comment: Some(comment),
+            likes: HashSet::new(),
+            likes_count: 0,
+
+            created_at: Utc::now(),
+        }
+    }
+
     // TODO: This should have a start date specified
     pub async fn query_feed_con(offset: usize, con: &mut ConType) -> anyhow::Result<FtQuery<Self>> {
         // Maybe do some maths to read backwards? Will this be more expensive maybe?
         Ok(redis::cmd("FT.SEARCH")
             .arg(POST_INDEX_NAME)
-            .arg("*")
+            .arg("@comments:{0}")
             .arg("SORTBY")
             .arg("feed")
             .arg("DESC")
@@ -164,6 +227,33 @@ impl Post {
         Ok(Self::query_author_feed_con(author, offset, &mut con).await?)
     }
 
+    pub async fn query_comments_con(
+        parent: &Uuid,
+        offset: usize,
+        con: &mut ConType,
+    ) -> anyhow::Result<FtQuery<Self>> {
+        let q = format!(
+            "@comments:{{{}}}",
+            db::sanitizer::sanitizer(parent.to_string().as_str())
+        );
+
+        Ok(redis::cmd("FT.SEARCH")
+            .arg(POST_INDEX_NAME)
+            .arg(q)
+            .arg("SORTBY")
+            .arg("feed")
+            .arg("ASC")
+            .arg("LIMIT")
+            .arg(offset)
+            .arg(25)
+            .query_async(con)
+            .await?)
+    }
+    pub async fn query_comments(parent: &Uuid, offset: usize) -> anyhow::Result<FtQuery<Self>> {
+        let mut con = db::get_con();
+
+        Ok(Self::query_comments_con(parent, offset, &mut con).await?)
+    }
     // TODO: Stop-words and levenshtein distance functions..
     pub async fn search_con(
         term: &str,
@@ -208,7 +298,7 @@ impl Post {
             .arg("search")
             .arg("TEXT")
             // Comment
-            .arg("$.comments_on")
+            .arg("$.comment")
             .arg("AS")
             .arg("comments")
             .arg("TAG")

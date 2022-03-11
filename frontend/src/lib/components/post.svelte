@@ -10,33 +10,34 @@
 
 	const dispatch = createEventDispatcher<{ like: void }>();
 
-	export let pubPost: PublicPost;
+	export let post: PublicPost;
 
-	$: authorHref = pubPost.author.data.name;
-	$: likes = pubPost.likes_count;
-	$: iLike = pubPost.i_like;
+	$: authorHref = post.author.data.name;
+	$: likes = post.likes_count;
+	$: iLike = post.i_like;
 </script>
 
 <article class="m-1 my-4 dark:bg-slate-700 bg-slate-50 p-2 rounded">
 	<div class="flex gap-2 items-center">
 		<div class="h-10 w-10 rounded-full bg-pink-200" />
 		<p class="font-bold text-center">
-			@{#if !authorHref}
-				<slot name="author" />
-			{:else}
-				<Anchor href={`/user/${authorHref}`}>
-					<slot name="author" />
-				</Anchor>
-			{/if}
+			@<Anchor href={`/user/${authorHref}`}>
+				{post.author.data.name}
+			</Anchor>
 		</p>
 	</div>
 	<div class="flex gap-2 align-center mt-2">
-		<div
-			on:click={() => dispatch('like')}
+		<button
+			on:click={(e) => {
+				e.preventDefault();
+				dispatch('like');
+			}}
 			class="w-10 h-10 flex justify-center items-center flex-col select-none"
 		>
 			{#if iLike && $me !== null}<FilledHeartIcon />{:else}<HeartIcon />{/if}{likes}
-		</div>
-		<p class="whitespace-pre-line"><slot /></p>
+		</button>
+		<Anchor href={`/post/${post.uuid}`}>
+			<p class="whitespace-pre-line">{post.message}</p>
+		</Anchor>
 	</div>
 </article>

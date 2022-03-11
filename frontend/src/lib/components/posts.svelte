@@ -7,22 +7,17 @@
 	export let feed: PublicPost[];
 </script>
 
-{#each feed as result, index (result.uuid)}
+{#each feed as post, index (post.uuid)}
 	<Post
-		pubPost={result}
+		{post}
 		on:like={async () => {
-			const response = await paths.post.toggleLike(result.uuid);
+			const response = await paths.post.toggleLike(post.uuid);
 
 			if (response.data) {
 				feed[index] = response.data;
 			}
 		}}
-	>
-		<svelte:fragment slot="author">
-			{result.author.data.name}
-		</svelte:fragment>
-		{result.message}
-	</Post>
+	/>
 {:else}
 	<slot>No posts were found</slot>
 {/each}
