@@ -67,6 +67,7 @@ pub struct Post {
 
     #[serde(with = "self::comment_serde")]
     pub comment: Option<Uuid>,
+    pub comment_count: usize,
     pub likes: HashSet<Uuid>,
     pub likes_count: usize,
 
@@ -83,7 +84,10 @@ pub struct PublicPost {
 
     pub likes_count: usize,
     pub i_like: bool,
-    // pub comments: !,
+
+    pub comment_count: usize,
+    pub comment: Option<Uuid>,
+
     #[serde(with = "ts_seconds")]
     pub created_at: DateTime<Utc>,
 }
@@ -101,6 +105,9 @@ impl PublicPost {
                 Some(t) => post.likes.contains(&t.sub),
                 None => false,
             },
+
+            comment: post.comment,
+            comment_count: post.comment_count,
 
             created_at: post.created_at,
         }
@@ -121,6 +128,9 @@ impl PublicPost {
                 None => false,
             },
 
+            comment: post.comment,
+            comment_count: post.comment_count,
+
             created_at: post.created_at,
         }
     }
@@ -140,6 +150,9 @@ impl PublicPost {
                 None => false,
             },
 
+            comment: post.comment,
+            comment_count: post.comment_count,
+
             created_at: post.created_at,
         }
     }
@@ -156,6 +169,8 @@ impl Post {
             message,
 
             comment: None,
+            comment_count: 0,
+
             likes: HashSet::new(),
             likes_count: 0,
 
@@ -171,6 +186,8 @@ impl Post {
             message,
 
             comment: Some(comment),
+            comment_count: 0,
+
             likes: HashSet::new(),
             likes_count: 0,
 

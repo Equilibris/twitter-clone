@@ -2,6 +2,7 @@
 	import Anchor from '$lib/components/anchor.svelte';
 	import HeartIcon from 'carbon-icons-svelte/lib/Favorite20';
 	import FilledHeartIcon from 'carbon-icons-svelte/lib/FavoriteFilled20';
+	import AddCommentIcon from 'carbon-icons-svelte/lib/AddComment20';
 
 	import type { PublicPost } from '$lib/typings/api';
 	import { createEventDispatcher } from 'svelte';
@@ -11,8 +12,11 @@
 	const dispatch = createEventDispatcher<{ like: void }>();
 
 	export let post: PublicPost;
+	export let prefetch = true;
 
 	$: authorHref = post.author.data.name;
+	$: comments = post.comment_count;
+
 	$: likes = post.likes_count;
 	$: iLike = post.i_like;
 </script>
@@ -25,19 +29,21 @@
 				{post.author.data.name}
 			</Anchor>
 		</p>
+		<div class="flex-grow" />
+		<button class="flex gap-2 justify-center items-center" on:click={(e) => dispatch('like')}
+			>{likes}
+			{#if iLike && $me !== null}<FilledHeartIcon />{:else}<HeartIcon />{/if}
+		</button>
+		<Anchor {prefetch} href={`/post/${post.uuid}`}>
+			<div class="flex gap-2 justify-center items-center">
+				{comments}
+				<AddCommentIcon />
+			</div>
+		</Anchor>
 	</div>
 	<div class="flex gap-2 align-center mt-2">
-		<button
-			on:click={(e) => {
-				e.preventDefault();
-				dispatch('like');
-			}}
-			class="w-10 h-10 flex justify-center items-center flex-col select-none"
-		>
-			{#if iLike && $me !== null}<FilledHeartIcon />{:else}<HeartIcon />{/if}{likes}
-		</button>
-		<Anchor href={`/post/${post.uuid}`}>
-			<p class="whitespace-pre-line">{post.message}</p>
+		<Anchor {prefetch} href={`/post/${post.uuid}`}>
+			<p class="ml-12 whitespace-pre-line">{post.message}</p>
 		</Anchor>
 	</div>
 </article>

@@ -69,6 +69,11 @@ async fn create_comment(data: Json<CommentData>, tau: TAU) -> ApiResult<PublicPo
     let user = tau.user;
     let post = Post::new_comment(data.message.to_owned(), &user, data.post);
 
+    match db::inc::<Post>(&data.post, "$.comment_count", 1).await {
+        Ok(_) => (),
+        Err(e) => return ApiResult::error(url, 500, PostError::UnknownError(e.to_string())),
+    };
+
     match db::write(&post).await {
         Err(e) => ApiResult::error_with_refresh_token(
             url,

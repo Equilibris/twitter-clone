@@ -44,6 +44,9 @@ export interface PublicPost {
 	likes_count: number;
 	i_like: boolean;
 
+	comment: null | string;
+	comment_count: number;
+
 	created_at: number;
 }
 

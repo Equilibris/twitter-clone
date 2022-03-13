@@ -3,10 +3,27 @@
 	import type { ErrorLoad } from '@sveltejs/kit';
 
 	export const load: ErrorLoad = async ({ params }) => {
-		const data = await paths.post.post(params.id);
+		const dataStream: PublicPost[] = [];
+
+		let fetchId: string | null = params.id;
+
+		do {
+			const data = await paths.post.post(fetchId);
+
+			if (data.data) {
+				dataStream.push(data.data);
+				fetchId = data.data.comment;
+			} else {
+				break;
+			}
+		} while (fetchId);
 
 		return {
-			props: { data },
+			props: {
+				dataStream: dataStream.reverse(),
+				serverTime: Date.now(),
+				doesExist: !!dataStream.length,
+			},
 		};
 	};
 </script>
@@ -14,36 +31,46 @@
 <script lang="ts">
 	import CenterContainer from '$lib/components/centerContainer.svelte';
 	import Posts from '$lib/components/posts.svelte';
-	import Post from '$lib/components/post.svelte';
 	import PostInput from '$lib/components/postInput.svelte';
 	import Cataas from '$lib/components/cataas.svelte';
 
-	import type { ApiResult, PostError, PublicPost } from '$lib/typings/api';
+	import type { PublicPost } from '$lib/typings/api';
 	import { me } from '$lib/data/me/store';
 	import CbOnBottom from '$lib/components/cbOnBottom.svelte';
 
-	export let data: ApiResult<PublicPost, PostError>;
+	export let dataStream: PublicPost[];
+	export let serverTime: number;
+	export let doesExist: boolean;
 
 	let isFetching = true;
 	let done = false;
-
-	const post = data.data;
-
 	let feed: PublicPost[] = [];
+
+	let post: PublicPost = dataStream[dataStream.length - 1];
+	$: serverTime, (post = dataStream[dataStream.length - 1]);
 
 	const get_results = async () => {
 		if (post) {
 			const results = await paths.post.comments(post.uuid, feed.length);
 
-			done = results.data.length == 0;
 			for (const result of results.data || []) if (result.data) feed.push(result.data);
 
+			done = results.data?.length === 0;
 			feed = feed;
 			isFetching = false;
 		}
 	};
 
-	get_results();
+	const init = () => {
+		isFetching = true;
+		done = false;
+
+		feed = [];
+
+		get_results();
+	};
+
+	$: serverTime, init();
 
 	let message = '';
 
@@ -58,8 +85,8 @@
 </script>
 
 <CenterContainer>
-	{#if post}
-		<Post {post} />
+	{#if doesExist}
+		<Posts disablePrefetch disableInvalidation feed={dataStream} />
 
 		{#if $me}
 			<PostInput
@@ -70,17 +97,19 @@
 		{/if}
 
 		<div class="m-4">
-			<Posts bind:feed>
+			<Posts disablePrefetch bind:feed>
 				<div class="text-center">There are no comments here,<br /> Be the first.</div>
 			</Posts>
-			<CbOnBottom
-				on:intersect={async (v) => {
-					if (v && !isFetching) {
-						isFetching = true;
-						await get_results();
-					}
-				}}
-			/>
+			{#if !done}
+				<CbOnBottom
+					on:intersect={async (v) => {
+						if (v && !isFetching) {
+							isFetching = true;
+							await get_results();
+						}
+					}}
+				/>
+			{/if}
 		</div>
 	{:else}
 		<div style="margin-top:50vh;transform:translateY(-50%)" class="rounded overflow-hidden">

@@ -133,3 +133,27 @@ pub async fn bulk_read<Doc: DeserializeOwned + std::fmt::Debug>(
 
     Ok(bulk_read_con(id, &mut con).await?)
 }
+
+pub async fn inc_con<Doc: Idable>(
+    id: &Uuid,
+    path: &str,
+    n: isize,
+    con: &mut ConType,
+) -> anyhow::Result<()> {
+    let id = convert_uuid::<Doc>(&id);
+
+    let v: redis::Value = redis::cmd("JSON.NUMINCRBY")
+        .arg(id)
+        .arg(path)
+        .arg(n)
+        .query_async(con)
+        .await?;
+
+    Ok(())
+}
+
+pub async fn inc<Doc: Idable>(id: &Uuid, path: &str, n: isize) -> anyhow::Result<()> {
+    let mut con = get_con();
+
+    Ok(inc_con::<Doc>(id, path, n, &mut con).await?)
+}

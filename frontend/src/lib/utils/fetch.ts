@@ -31,8 +31,6 @@ const get = async <entry extends Entry<null, unknown, unknown>>(
 	try {
 		const response = await (
 			await fetch(`${SERVER_URL}${url}`, {
-				// mode: 'no-cors',
-				// credentials: 'include',
 				headers: {
 					Authorization: getRefreshToken(),
 				},
@@ -62,9 +60,6 @@ const post = async <entry extends Entry<unknown, unknown, unknown>>(
 			await fetch(`${SERVER_URL}${url}`, {
 				method: 'POST',
 				body: JSON.stringify(body),
-				// mode: 'no-cors',
-
-				// credentials: 'include',
 				headers: {
 					Authorization: getRefreshToken(),
 				},

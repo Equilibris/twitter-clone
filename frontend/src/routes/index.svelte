@@ -20,7 +20,7 @@
 
 		const results = await paths.post.feed(feed.length);
 
-		done = results.data.length == 0;
+		done = results.data?.length == 0;
 		for (const result of results.data || []) if (result.data) feed.push(result.data);
 
 		feed = feed;
