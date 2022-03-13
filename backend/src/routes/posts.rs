@@ -155,7 +155,6 @@ async fn feed(offset: usize, ppt: PPT) -> ApiResult<Vec<ApiResult<PublicPost, ()
 
 #[derive(Serialize)]
 enum FeedError {
-    PostDoesNotExist(&'static str),
     AuthorDoesNotExist(&'static str),
     DbAccessError(String),
 }

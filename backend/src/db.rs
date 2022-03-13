@@ -142,7 +142,7 @@ pub async fn inc_con<Doc: Idable>(
 ) -> anyhow::Result<()> {
     let id = convert_uuid::<Doc>(&id);
 
-    let v: redis::Value = redis::cmd("JSON.NUMINCRBY")
+    let _v: redis::Value = redis::cmd("JSON.NUMINCRBY")
         .arg(id)
         .arg(path)
         .arg(n)

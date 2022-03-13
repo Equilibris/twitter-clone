@@ -19,9 +19,9 @@ impl Fairing for CORS {
             if cfg!(debug_assertions) {
                 "http://localhost:3000"
             } else {
-                "http://it1-twitter.herokuapp.com"
-            }
-            ));
+                "https://it1-twitter.herokuapp.com"
+            },
+        ));
         response.set_header(Header::new(
             "Access-Control-Allow-Methods",
             "POST, GET, PATCH, OPTIONS",
