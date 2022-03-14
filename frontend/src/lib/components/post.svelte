@@ -32,7 +32,7 @@
 		<div class="flex-grow" />
 		<button class="flex gap-2 justify-center items-center" on:click={(e) => dispatch('like')}
 			>{likes}
-			{#if iLike && $me !== null}<FilledHeartIcon />{:else}<HeartIcon />{/if}
+			{#if iLike}<FilledHeartIcon />{:else}<HeartIcon />{/if}
 		</button>
 		<Anchor {prefetch} href={`/post/${post.uuid}`}>
 			<div class="flex gap-2 justify-center items-center">
