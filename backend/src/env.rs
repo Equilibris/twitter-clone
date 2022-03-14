@@ -3,7 +3,7 @@ pub(crate) mod client {
 
     lazy_static::lazy_static! {
         static ref CLIENT_SINGLETON_OBJECT_REFERENCE: redis::Client = {
-            let redis_conn_url = if cfg!(debug_assertions) { "redis://127.0.0.1:6379".to_string() } else {
+            let redis_conn_url = if cfg!(debug_assertions) && std::option_env!("USE_REAL_DB").is_none() { "redis://127.0.0.1:6379".to_string() } else {
                 let redis_url = std::env::var("REDIS_URL").expect("Missing env variable `REDIS_URL`");
                 let redis_password =
                     std::env::var("REDIS_PASSWORD").expect("Missing env variable `REDIS_PASSWORD`");

@@ -10,6 +10,7 @@ specifiers:
   '@types/webpack': ^5.28.0
   babel-loader: ^8.2.3
   clean-webpack-plugin: ^4.0.0
+  core-js: ^3.21.1
   typescript: ^4.6.2
   webpack: ^5.70.0
   webpack-cli: ^4.9.2
@@ -24,6 +25,7 @@ dependencies:
   '@types/webpack': 5.28.0_webpack-cli@4.9.2
   babel-loader: 8.2.3_ed870ac3ba52c4ec230ba2bc3dbb311c
   clean-webpack-plugin: 4.0.0_webpack@5.70.0
+  core-js: 3.21.1
   typescript: 4.6.2
   webpack: 5.70.0_webpack-cli@4.9.2
   webpack-cli: 4.9.2_webpack@5.70.0
@@ -1644,6 +1646,11 @@ packages:
     dependencies:
       browserslist: 4.20.0
       semver: 7.0.0
+    dev: false
+
+  /core-js/3.21.1:
+    resolution: {integrity: sha512-FRq5b/VMrWlrmCzwRrpDYNxyHP9BcAZC+xHJaqTgIE5091ZV1NTmyh0sGOg5XqpnHvR0svdy0sv1gWA1zmhxig==}
+    requiresBuild: true
     dev: false
 
   /cross-spawn/7.0.3:

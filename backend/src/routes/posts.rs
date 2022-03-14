@@ -124,7 +124,7 @@ fn transform_to_output(
 }
 
 // TODO: Basis value, where is starts using Date.now()
-#[get("/feed/<offset>")]
+#[get("/feed/<offset>", rank = 0)]
 async fn feed(offset: usize, ppt: PPT) -> ApiResult<Vec<ApiResult<PublicPost, ()>>, PostError> {
     let url = format!("/post/feed/{}", offset);
 
@@ -159,7 +159,7 @@ enum FeedError {
     DbAccessError(String),
 }
 
-#[get("/<author>/<offset>")]
+#[get("/<author>/<offset>", rank = 3)]
 async fn author_feed(
     author: Uuid,
     offset: usize,
