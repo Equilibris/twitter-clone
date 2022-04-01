@@ -175,5 +175,73 @@
 
 			<Cataas {gif} say={message} />
 		{/if}
+		<h2 class="text-2xl">features</h2>
+		<p>
+			using the above mentioned components i've implemented a plethora of features these vary from
+			forest-comments to data searching. we will discuss some of these now.
+		</p>
+		<h3 class="text-xl">user sessions</h3>
+		<p>
+			user sessions was one of the most complex features to implement. this is because i chose the
+			incorrect session management scheme from the get go. this was the 'cookie session' scheme.
+			this has numerous flaws:
+		</p>
+		<ol class="list-decimal pl-10">
+			<li>it takes up data-volume on the server</li>
+			<li>
+				it is slow since you need more than one database <br />
+				requests to access the session data
+			</li>
+			<li>it is limiting for cross origin requests</li>
+		</ol>
+		<p>
+			problems 1 & 2 are not that critical. but problem 3 was the pest. to fix all these problems i
+			chose to use jwt tokens to store user data. this is a far supperior option in my opinion.
+			using these jwt tokens i then enabled the user to do full authentication to the app.
+		</p>
+		<p />
+		<h3 class="text-xl">posting</h3>
+		<p>
+			posting is the most trivial feature of the app. posts are stored as roots of trees in an
+			orderd forest on the database. you post posts logically enugth by writing a post in the post
+			input and then clicking send. simple. easy. clean.
+		</p>
+		<h3 class="text-xl">orderd-child trees comments.</h3>
+		<p>
+			child comments are stored in an orderd tree bellow the top level root of the application. the
+			post. you can comment on all posts and all comments. these are then resolved in o(n) time from
+			the server using a simple indexing strategy.
+		</p>
+		<h3 class="text-xl">hash-set likes.</h3>
+		<p>
+			the server also stores likes for each post/comment. these are stored as a hash-set making it
+			fast (o(1)) and easy to like posts. to like a post you juts press the heart icon on a post or
+			comment and voiala, a like.
+		</p>
+		<h3 class="text-xl">searching</h3>
+		<p>
+			searching is one of the worst features of the app but implemented through neceity. there is
+			support for fuzzy text matching but i have disabled this since it would mean stopwords would
+			be skipped and that would be anoying. you search using the search bar. this is done through a
+			simple form submission. i am too lazy to implement anything else.
+		</p>
+		<h3 class="text-xl">post view</h3>
+		<p>by clicking on the text in a post it will redirect you to the posts own page.</p>
+		<h3 class="text-xl">user view</h3>
+		<p>
+			by clicking on the text in the username in a post iy will redirect you to the users own page.
+		</p>
+		<h2 class="text-2xl">non-features</h2>
+		<p>
+			there are a few features i wanted to implement but through technical limitations were unable
+			to. here are some of them.
+		</p>
+		<h3 class="text-xl">ip locked jwt tokens</h3>
+		<p>
+			i would hash the ip and store it as the aud field on the jwt. this would be neet but not
+			necessary. it would prevent cookie theatht.
+		</p>
+		<h3 class="text-xl">file uploads</h3>
+		<p>i dont want to spend money on s3 for a simple school project.</p>
 	</div>
 </CenterContainer>
